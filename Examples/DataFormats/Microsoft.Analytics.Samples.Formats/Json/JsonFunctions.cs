@@ -155,12 +155,9 @@ namespace Microsoft.Analytics.Samples.Formats.Json
 
                     using (var msi = new MemoryStream(bytes))
                     using (var mso = new MemoryStream())
+                    using (var gs = new BufferedStream(new GZipStream(mso, CompressionLevel.Optimal),8192))
                     {
-                        using (var gs = new GZipStream(mso, CompressionLevel.Optimal))
-                        {
-                            msi.CopyTo(gs);                            
-                        }
-
+                        msi.CopyTo(gs);
                         return mso.ToArray();
                     };
                 }
