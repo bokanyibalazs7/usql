@@ -31,6 +31,8 @@ namespace Microsoft.Analytics.Samples.Formats.Json
     /// </summary>
     public static class JsonFunctions
     {
+        private const int BUFFER_SIZE = 8192;
+
         /// <summary>
         /// JsonTuple("json", [$e1], [$e2], ...)
         ///     1. Parse Json (once for all paths)
@@ -49,6 +51,24 @@ namespace Microsoft.Analytics.Samples.Formats.Json
         {
             // Delegate
             return JsonTuple<string>(json, paths);
+        }
+
+        public static SqlMap<string, string> JsonTuple(byte[] compressedJson, params string[] paths)
+        {
+            return JsonTuple<string>(compressedJson, paths);
+        }
+
+        public static SqlMap<string, T>                        JsonTuple<T>(byte[] compressedJson, params string[] paths)
+        {
+            string jsonString;
+            using (var compressedMs = new MemoryStream(compressedJson))
+            using (var decompressedMs = new MemoryStream())
+            using (var gzs = new BufferedStream(new GZipStream(compressedMs, CompressionMode.Decompress), BUFFER_SIZE))
+            {
+                gzs.CopyTo(decompressedMs);
+                jsonString = Encoding.UTF8.GetString(decompressedMs.ToArray());
+            }
+            return JsonTuple<T>(jsonString, paths);
         }
 
         /// <summary/>
@@ -155,7 +175,7 @@ namespace Microsoft.Analytics.Samples.Formats.Json
 
                     using (var msi = new MemoryStream(bytes))
                     using (var mso = new MemoryStream())
-                    using (var gs = new BufferedStream(new GZipStream(mso, CompressionLevel.Optimal),8192))
+                    using (var gs = new BufferedStream(new GZipStream(mso, CompressionLevel.Optimal),BUFFER_SIZE))
                     {
                         msi.CopyTo(gs);
                         return mso.ToArray();
