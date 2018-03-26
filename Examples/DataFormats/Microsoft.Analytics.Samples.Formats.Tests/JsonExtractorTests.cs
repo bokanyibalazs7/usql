@@ -4,6 +4,7 @@ using Microsoft.Analytics.UnitTest;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -15,6 +16,8 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
     [TestClass]
     public class JsonExtractorTests
     {
+        private const int BUFFER_SIZE = 8192;
+
         public JsonExtractorTests()
         {
             //
@@ -221,6 +224,20 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
         }
 
         [TestMethod]
+        public void JsonExtractor_DatatypeByte_Compressed_Extracted()
+        {
+            byte[] bytes = { 2, 4, 6 };
+            var data = new List<SingleColumnPoco<byte[]>>
+            {
+                new SingleColumnPoco<byte[]>() { Value = bytes }
+            };
+
+            var result = ExecuteExtract(data, true);
+            var dresult=DecompressByteArray(result[0].Get<byte[]>("Value"));
+            Assert.IsTrue(dresult[0] == 2);
+        }
+
+        [TestMethod]
         public void JsonExtractor_DatatypeNullableByte_Extracted()
         {
             byte[] bytes = { 2, 4, 6 };
@@ -237,6 +254,21 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
         }
 
         [TestMethod]
+        public void JsonExtractor_DatatypeNullableByte_Compressed_Extracted()
+        {
+            byte[] bytes = { 2, 4, 6 };
+            var data = new List<SingleColumnPoco<byte[]>>
+            {
+                new SingleColumnPoco<byte[]>() { Value = bytes },
+                new SingleColumnPoco<byte[]>() { Value = null }
+            };
+
+            var result = ExecuteExtract(data, true);
+            var dresult = DecompressByteArray(result[0].Get<byte[]>("Value"));
+            Assert.IsTrue(dresult[0] == 2);
+        }
+
+        [TestMethod]
         public void JsonExtractor_DatatypeString_Extracted()
         {
             var data = new List<SingleColumnPoco<string>>
@@ -246,6 +278,22 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
             };
 
             var result = ExecuteExtract(data);
+
+            Assert.IsTrue(result[0].Get<string>("Value") == "asdf");
+            Assert.IsTrue(result[1].Get<string>("Value") == "");
+        }
+
+
+        [TestMethod]
+        public void JsonExtractor_DatatypeString_Extracted_ExtraCharsFront()
+        {
+            var data = new List<SingleColumnPoco<string>>
+            {
+                new SingleColumnPoco<string>() { Value = "asdf" },
+                new SingleColumnPoco<string>() { Value = "" }
+            };
+
+            var result = ExecuteExtract(data, convertJsonString: j=>"extra chars"+j);
 
             Assert.IsTrue(result[0].Get<string>("Value") == "asdf");
             Assert.IsTrue(result[1].Get<string>("Value") == "");
@@ -276,17 +324,30 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
             Assert.IsTrue(result.Count == 0);
         }
 
-        private IList<IRow> ExecuteExtract<T>(List<SingleColumnPoco<T>> data)
+        private IList<IRow> ExecuteExtract<T>(List<SingleColumnPoco<T>> data, bool compressByteArray = false, Func<string,string> convertJsonString = null)
         {
             var output = SingleColumnRowGenerator<T>().AsUpdatable();
 
             var jsonString = JsonConvert.SerializeObject(data);
+            if (convertJsonString != null)
+                jsonString = convertJsonString(jsonString);
             using (var dataStream = new MemoryStream(Encoding.UTF8.GetBytes(jsonString)))
             {
                 var reader = new USqlStreamReader(dataStream);
-                var extractor = new JsonExtractor();
+                var extractor = new JsonExtractor(compressByteArray:compressByteArray);
                 return extractor.Extract(reader, output).ToList();
             }
-        }        
+        }
+
+        private static byte[] DecompressByteArray(byte[] input)
+        {
+            using (var compressedMs = new MemoryStream(input))
+            using (var decompressedMs = new MemoryStream())
+            using (var gzs = new GZipStream(compressedMs, CompressionMode.Decompress))
+            {
+                gzs.CopyTo(decompressedMs);
+                return decompressedMs.ToArray();
+            }
+        }
     }
 }

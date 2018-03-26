@@ -161,7 +161,7 @@ namespace Microsoft.Analytics.Samples.Formats.Json
         }
 
         /// <summary/>
-        internal static object                                      ConvertToken(JToken token, Type type)
+        internal static object                                      ConvertToken(JToken token, Type type, bool compressByteArray = false)
         {
             try
             { 
@@ -169,17 +169,10 @@ namespace Microsoft.Analytics.Samples.Formats.Json
                 {
                     return JsonFunctions.GetTokenString(token);
                 }
-                if (type == typeof(byte[]))
+                if (compressByteArray && type == typeof(byte[]))
                 {
-                    var bytes = Encoding.UTF8.GetBytes(JsonFunctions.GetTokenString(token));
-
-                    using (var msi = new MemoryStream(bytes))
-                    using (var mso = new MemoryStream())
-                    using (var gs = new BufferedStream(new GZipStream(mso, CompressionLevel.Optimal),BUFFER_SIZE))
-                    {
-                        msi.CopyTo(gs);
-                        return mso.ToArray();
-                    };
+                    var tokenAsByteArray=token.ToObject<byte[]>();
+                    return CompressJsonFramgment(tokenAsByteArray);
                 }
             
                 // We simply delegate to Json.Net for data conversions
@@ -192,6 +185,22 @@ namespace Microsoft.Analytics.Samples.Formats.Json
                 throw new JsonSerializationException(
                     string.Format(typeof(JsonToken).Namespace + " failed to deserialize '{0}' from '{1}' to '{2}'", token.Path, token.Type.ToString(), type.FullName), 
                     e);
+            }
+        }
+
+        private static byte[] CompressJsonFramgment(byte[] bytes)
+        {
+            if (bytes == null) return null;
+            using (var mso = new MemoryStream())
+            {
+                using (var msi = new MemoryStream(bytes))
+                using (var gzs = new GZipStream(mso, CompressionLevel.Optimal))
+                using (var gs = new BufferedStream(gzs, BUFFER_SIZE))
+                {
+                    msi.CopyTo(gs);
+                }
+                byte[] retVal = mso.ToArray();
+                return retVal;
             }
         }
     }

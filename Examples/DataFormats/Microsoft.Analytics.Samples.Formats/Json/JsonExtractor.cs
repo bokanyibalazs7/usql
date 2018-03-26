@@ -39,38 +39,37 @@ namespace Microsoft.Analytics.Samples.Formats.Json
         /// <summary/>
         private string rowpath;
 
+        protected bool compressByteArray;
+
         /// <summary/>
-        public JsonExtractor(string rowpath = null)
+        public JsonExtractor(string rowpath = null, bool compressByteArray = false)
         {
             this.rowpath = rowpath;
-        }
-        
-        /// <summary/>
-        public override IEnumerable<IRow>       Extract(IUnstructuredReader input, IUpdatableRow output)
-        {
-            Stream stream = input.BaseStream;
-            foreach (var row in Extract(stream, output))
-                yield return row;
+            this.compressByteArray = compressByteArray;
         }
 
-        protected virtual IEnumerable<IRow> Extract(Stream inputStream, IUpdatableRow output)
+        public override IEnumerable<IRow> Extract(IUnstructuredReader input, IUpdatableRow output)
         {
             // Json.Net
-            using (var reader = new JsonTextReader(new StreamReader(inputStream)))
+            using (var reader = new JsonTextReader(new StreamReader(input.BaseStream)))
             {
                 // Parse Json one token at a time
-                if (!reader.Read()) yield break;
-                if (reader.TokenType != JsonToken.StartObject) yield break;
-                var token = JToken.Load(reader);
-
-                // Rows
-                //  All objects are represented as rows
-                foreach (JObject o in SelectChildren(token, this.rowpath))
+                while (reader.Read())
                 {
-                    // All fields are represented as columns
-                    this.JObjectToRow(o, output);
+                    if (reader.TokenType == JsonToken.StartObject)
+                    {
+                        var token = JToken.Load(reader);
 
-                    yield return output.AsReadOnly();
+                        // Rows
+                        //  All objects are represented as rows
+                        foreach (JObject o in SelectChildren(token, this.rowpath))
+                        {
+                            // All fields are represented as columns
+                            this.JObjectToRow(o, output);
+
+                            yield return output.AsReadOnly();
+                        }
+                    }
                 }
             }
         }
@@ -119,7 +118,7 @@ namespace Microsoft.Analytics.Samples.Formats.Json
                     //      ie: SELECT DateTime.Parse(datetime) AS datetime, ...
                     //  Note: Json.Net incorrectly returns null even for some non-nullable types (sbyte)
                     //      We have to correct this by using the default(T) so it can fit into a row value
-                    value = JsonFunctions.ConvertToken(token, c.Type) ?? c.DefaultValue;
+                    value = JsonFunctions.ConvertToken(token, c.Type, compressByteArray) ?? c.DefaultValue;
                 }
 
                 // Update
