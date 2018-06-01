@@ -285,7 +285,7 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
 
 
         [TestMethod]
-        public void JsonExtractor_DatatypeString_Extracted_ExtraCharsFront()
+        public void JsonExtractor_DatatypeString_Extracted_OrphanOpenArrayFront()
         {
             var data = new List<SingleColumnPoco<string>>
             {
@@ -293,10 +293,60 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
                 new SingleColumnPoco<string>() { Value = "" }
             };
 
-            var result = ExecuteExtract(data, convertJsonString: j=>"extra chars"+j);
+            var result = ExecuteExtract(data, convertJsonString: j=>"["+j);
 
             Assert.IsTrue(result[0].Get<string>("Value") == "asdf");
             Assert.IsTrue(result[1].Get<string>("Value") == "");
+        }
+
+        [TestMethod]
+        public void JsonExtractor_DatatypeString_Extracted_ExtraCommaAtEnd()
+        {
+            var data = new List<SingleColumnPoco<string>>
+            {
+                new SingleColumnPoco<string>() { Value = "asdf" },
+                new SingleColumnPoco<string>() { Value = "" }
+            };
+
+            var result = ExecuteExtract(data, convertJsonString: j => j+",", numOfDocs:data.Count);
+
+            Assert.IsTrue(result[0].Get<string>("Value") == "asdf");
+            Assert.IsTrue(result[1].Get<string>("Value") == "");
+        }
+
+        [TestMethod]
+        public void JsonExtractor_DatatypeString_Extracted_OrphanEndArrayAtEnd()
+        {
+            var data = new List<SingleColumnPoco<string>>
+            {
+                new SingleColumnPoco<string>() { Value = "asdf" },
+                new SingleColumnPoco<string>() { Value = "" }
+            };
+
+            var result = ExecuteExtract(data, convertJsonString: j => j + "]", numOfDocs: data.Count);
+
+            Assert.IsTrue(result[0].Get<string>("Value") == "asdf");
+            Assert.IsTrue(result[1].Get<string>("Value") == "");
+        }
+
+        [TestMethod]
+        public void MultiLineJsonExtractor_DatatypeString_Extracted_OrphanEndArrayAtEnd()
+        {
+            var data = new List<SingleColumnPoco<string>>
+            {
+                new SingleColumnPoco<string>() { Value = "asdf" },
+                new SingleColumnPoco<string>() { Value = "foo" },
+                new SingleColumnPoco<string>() { Value = "bar" }
+            };
+            string searchStr = "},";
+            var result = ExecuteExtract(data
+            , convertJsonString: j => j.Replace(searchStr, searchStr + "\r\n")
+            , numOfDocs: 1
+            , multiline:true);
+
+            Assert.IsTrue(result[0].Get<string>("Value") == "asdf");
+            Assert.IsTrue(result[1].Get<string>("Value") == "foo");
+            Assert.IsTrue(result[2].Get<string>("Value") == "bar");
         }
 
         [TestMethod]
@@ -324,7 +374,12 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
             Assert.IsTrue(result.Count == 0);
         }
 
-        private IList<IRow> ExecuteExtract<T>(List<SingleColumnPoco<T>> data, bool compressByteArray = false, Func<string,string> convertJsonString = null)
+
+        private IList<IRow> ExecuteExtract<T>(List<SingleColumnPoco<T>> data
+            , bool compressByteArray = false
+            , Func<string,string> convertJsonString = null
+            , int? numOfDocs=null
+            , bool multiline = false)
         {
             var output = SingleColumnRowGenerator<T>().AsUpdatable();
 
@@ -334,7 +389,9 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
             using (var dataStream = new MemoryStream(Encoding.UTF8.GetBytes(jsonString)))
             {
                 var reader = new USqlStreamReader(dataStream);
-                var extractor = new JsonExtractor(compressByteArray:compressByteArray);
+                var extractor = 
+                    multiline ? new MultiLineJsonExtractor(compressByteArray: compressByteArray, numOfDoc: numOfDocs)
+                    : new JsonExtractor(compressByteArray:compressByteArray, numOfDoc:numOfDocs);
                 return extractor.Extract(reader, output).ToList();
             }
         }
@@ -349,5 +406,8 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
                 return decompressedMs.ToArray();
             }
         }
+
+
+
     }
 }

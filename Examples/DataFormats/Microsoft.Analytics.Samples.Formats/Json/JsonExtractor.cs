@@ -41,20 +41,33 @@ namespace Microsoft.Analytics.Samples.Formats.Json
 
         protected bool compressByteArray;
 
+        private int? numOfDoc;
+
         /// <summary/>
-        public JsonExtractor(string rowpath = null, bool compressByteArray = false)
+        public JsonExtractor(string rowpath = null, bool compressByteArray = false, int? numOfDoc=null)
         {
             this.rowpath = rowpath;
             this.compressByteArray = compressByteArray;
+            this.numOfDoc = numOfDoc;
+
         }
 
         public override IEnumerable<IRow> Extract(IUnstructuredReader input, IUpdatableRow output)
         {
+            foreach (var row in ExtractCore(input.BaseStream, output))
+                yield return row;
+        }
+
+
+        protected IEnumerable<IRow> ExtractCore(Stream input, IUpdatableRow output)
+        {
+            int objectsRead = 0;
+            StreamReader sr = new StreamReader(input);
             // Json.Net
-            using (var reader = new JsonTextReader(new StreamReader(input.BaseStream)))
+            using (var reader = new JsonTextReader(sr))
             {
                 // Parse Json one token at a time
-                while (reader.Read())
+                while ((!numOfDoc.HasValue || objectsRead < numOfDoc) && reader.Read())
                 {
                     if (reader.TokenType == JsonToken.StartObject)
                     {
@@ -69,6 +82,7 @@ namespace Microsoft.Analytics.Samples.Formats.Json
 
                             yield return output.AsReadOnly();
                         }
+                        objectsRead++;
                     }
                 }
             }
