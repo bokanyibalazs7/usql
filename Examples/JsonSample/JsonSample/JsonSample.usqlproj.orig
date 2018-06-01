@@ -11,6 +11,7 @@
     <Name>JsonSample</Name>
     <RootNamespace>JsonSample</RootNamespace>
     <RuntimeVersion>default</RuntimeVersion>
+    <OutputStreamPath>C:\Users\rukmanig\AppData\Local\USQLDataRoot</OutputStreamPath>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -52,10 +53,7 @@
       <DependentUpon>NestedJsonParsing.usql</DependentUpon>
     </ScriptCode>
   </ItemGroup>
-  <Import Project="$(AppData)\Microsoft\DataLake\MsBuild\1.0\Usql.targets" Condition="'$(BuildingInsideVisualStudio)' == 'true'" />
+  <Import Project="$(AppData)\Microsoft\DataLake\MsBuild\1.0\Usql.targets" />
   <PropertyGroup>
   </PropertyGroup>
-  <!--target for CICD command line build added by project migration tool-->
-  <Import Project="USqlSDKBuild.targets" Condition="'$(BuildingInsideVisualStudio)' != 'true' And  Exists('USqlSDKBuild.targets')" />
-  <Import Project="$(USQLSDKPath)\USqlSDKBuild.targets" Condition="'$(BuildingInsideVisualStudio)' != 'true' And !Exists('USqlSDKBuild.targets') And '$(USQLSDKPath)' != '' And Exists('$(USQLSDKPath)\USqlSDKBuild.targets')" />
 </Project>

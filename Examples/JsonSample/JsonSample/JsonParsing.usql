@@ -29,7 +29,7 @@ REFERENCE ASSEMBLY [Microsoft.Analytics.Samples.Formats];
             rec["gender"] AS gender,
             rec["artist"] AS artist,
             rec["song"] AS song, 
-            Double.Parse((rec["length"] ?? "0")) AS length 
+            Double.Parse((rec["length"] ?? "0"), CultureInfo.InvariantCulture) AS length 
     FROM @jsonify;
 
 //Output the file to a tool of your choice.

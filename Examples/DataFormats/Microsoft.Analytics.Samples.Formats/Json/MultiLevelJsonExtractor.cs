@@ -27,6 +27,12 @@ namespace Microsoft.Analytics.Samples.Formats.Json
             this.bypassWarning = bypassWarning;
         }
 
+        public MultiLevelJsonExtractor(string rowpath = null, bool bypassWarning = false, params string[] jsonPaths)
+           : this(rowpath, false, bypassWarning, jsonPaths)
+        {
+           
+        }
+
         protected override void JObjectToRow(JObject o, IUpdatableRow row)
         {
             if (jsonPaths.Length == 0)
