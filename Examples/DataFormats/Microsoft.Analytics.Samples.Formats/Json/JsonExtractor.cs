@@ -41,14 +41,14 @@ namespace Microsoft.Analytics.Samples.Formats.Json
 
         protected bool compressByteArray;
 
-        private int? numOfDoc;
+        private int? numOfDocs;
 
         /// <summary/>
-        public JsonExtractor(string rowpath = null, bool compressByteArray = false, int? numOfDoc=null)
+        public JsonExtractor(string rowpath = null, bool compressByteArray = false, int? numOfDocs=null)
         {
             this.rowpath = rowpath;
             this.compressByteArray = compressByteArray;
-            this.numOfDoc = numOfDoc;
+            this.numOfDocs = numOfDocs;
 
         }
 
@@ -67,7 +67,7 @@ namespace Microsoft.Analytics.Samples.Formats.Json
             using (var reader = new JsonTextReader(sr))
             {
                 // Parse Json one token at a time
-                while ((!numOfDoc.HasValue || objectsRead < numOfDoc) && reader.Read())
+                while ((!numOfDocs.HasValue || objectsRead < numOfDocs) && reader.Read())
                 {
                     if (reader.TokenType == JsonToken.StartObject)
                     {

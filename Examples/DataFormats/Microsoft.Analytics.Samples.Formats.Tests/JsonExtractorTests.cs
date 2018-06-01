@@ -391,7 +391,7 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
                 var reader = new USqlStreamReader(dataStream);
                 var extractor = 
                     multiline ? new MultiLineJsonExtractor(compressByteArray: compressByteArray, numOfDoc: numOfDocs)
-                    : new JsonExtractor(compressByteArray:compressByteArray, numOfDoc:numOfDocs);
+                    : new JsonExtractor(compressByteArray:compressByteArray, numOfDocs:numOfDocs);
                 return extractor.Extract(reader, output).ToList();
             }
         }
