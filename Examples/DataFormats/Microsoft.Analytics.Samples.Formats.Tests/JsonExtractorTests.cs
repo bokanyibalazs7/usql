@@ -10,6 +10,7 @@ using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.Analytics.Samples.Formats.Json;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Microsoft.Analytics.Samples.Formats.Tests
 {
@@ -283,6 +284,21 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
             Assert.IsTrue(result[1].Get<string>("Value") == "");
         }
 
+        [TestMethod]
+        public void JsonExtractor_DatatypeString_Extracted_C()
+        {
+            var data = new List<SingleColumnPoco<string>>
+            {
+                new SingleColumnPoco<string>() { Value = "asdf" },
+                new SingleColumnPoco<string>() { Value = "foo" }
+            };
+
+            var result = ExecuteExtract(data, compressByteArray:true);
+
+            Assert.IsTrue(Encoding.UTF8.GetString(DecompressByteArray(result[0].Get<byte[]>("Value"))) == "asdf");
+            Assert.IsTrue(Encoding.UTF8.GetString(DecompressByteArray(result[1].Get<byte[]>("Value"))) == "foo");
+        }
+
 
         [TestMethod]
         public void JsonExtractor_DatatypeString_Extracted_OrphanOpenArrayFront()
@@ -330,7 +346,7 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
         }
 
         [TestMethod]
-        public void MultiLineJsonExtractor_DatatypeString_Extracted_OrphanEndArrayAtEnd()
+        public void MultiLineJsonExtractor_DatatypeString_Extracted_LineBreakAfterComma()
         {
             var data = new List<SingleColumnPoco<string>>
             {
@@ -343,6 +359,47 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
             , convertJsonString: j => j.Replace(searchStr, searchStr + "\r\n")
             , numOfDocs: 1
             , multiline:true);
+
+            Assert.IsTrue(result[0].Get<string>("Value") == "asdf");
+            Assert.IsTrue(result[1].Get<string>("Value") == "foo");
+            Assert.IsTrue(result[2].Get<string>("Value") == "bar");
+        }
+
+        [TestMethod]
+        public void MultiLineJsonExtractor_DatatypeString_Extracted_LineBreakAfterComma_RowDelim()
+        {
+            var data = new List<SingleColumnPoco<string>>
+            {
+                new SingleColumnPoco<string>() { Value = "asdf" },
+                new SingleColumnPoco<string>() { Value = "foo" },
+                new SingleColumnPoco<string>() { Value = "bar" }
+            };
+            string searchStr = "},";
+            var result = ExecuteExtract(data
+            , convertJsonString: j => j.Replace(searchStr, searchStr + "\r\n")
+            , numOfDocs: 1
+            , multiline: true
+            , rowdelim: ",\r\n");
+
+            Assert.IsTrue(result[0].Get<string>("Value") == "asdf");
+            Assert.IsTrue(result[1].Get<string>("Value") == "foo");
+            Assert.IsTrue(result[2].Get<string>("Value") == "bar");
+        }        
+
+        [TestMethod]
+        public void MultiLineJsonExtractor_DatatypeString_Extracted_ArrayLineBreaks()
+        {
+            var data = new List<SingleColumnPoco<string>>
+            {
+                new SingleColumnPoco<string>() { Value = "asdf" },
+                new SingleColumnPoco<string>() { Value = "foo" },
+                new SingleColumnPoco<string>() { Value = "bar" }
+            };           
+            var result = ExecuteExtract(data
+            , convertJsonString: j => j.Replace("[","[\r\n").Replace("]","\r\n]").Replace("},", "},\r\n")
+            , numOfDocs: 1
+            , multiline: true
+            , skipMalformedObjects:true);
 
             Assert.IsTrue(result[0].Get<string>("Value") == "asdf");
             Assert.IsTrue(result[1].Get<string>("Value") == "foo");
@@ -379,9 +436,11 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
             , bool compressByteArray = false
             , Func<string,string> convertJsonString = null
             , int? numOfDocs=null
-            , bool multiline = false)
+            , bool multiline = false
+            , string rowdelim = "\r\n"
+            , bool skipMalformedObjects = false)
         {
-            var output = SingleColumnRowGenerator<T>().AsUpdatable();
+            var output = (compressByteArray ? SingleColumnRowGenerator<byte[]>() : SingleColumnRowGenerator<T>()).AsUpdatable();
 
             var jsonString = JsonConvert.SerializeObject(data);
             if (convertJsonString != null)
@@ -390,8 +449,8 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
             {
                 var reader = new USqlStreamReader(dataStream);
                 var extractor = 
-                    multiline ? new MultiLineJsonExtractor(compressByteArray: compressByteArray, numOfDoc: numOfDocs)
-                    : new JsonExtractor(compressByteArray:compressByteArray, numOfDocs:numOfDocs);
+                    multiline ? new MultiLineJsonExtractor(rowdelim: rowdelim, compressByteArray: compressByteArray, numOfDocsPerLine: numOfDocs, skipMalformedObjects: skipMalformedObjects)
+                    : new JsonExtractor(compressByteArray:compressByteArray, numOfDocs:numOfDocs, skipMalformedObjects : skipMalformedObjects);
                 return extractor.Extract(reader, output).ToList();
             }
         }

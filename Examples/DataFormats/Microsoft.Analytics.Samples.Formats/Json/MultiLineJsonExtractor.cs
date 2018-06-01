@@ -29,8 +29,9 @@ namespace Microsoft.Analytics.Samples.Formats.Json
             , int? numOfDocsPerLine = null
             , string rowdelim = "\r\n"
             , Encoding encoding = null
+            , bool skipMalformedObjects = false
            ) 
-            : base(rowpath, compressByteArray, numOfDocsPerLine)
+            : base(rowpath, compressByteArray, numOfDocsPerLine, skipMalformedObjects)
         {
             this.rowdelim = (encoding ?? Encoding.UTF8).GetBytes(rowdelim);
         }

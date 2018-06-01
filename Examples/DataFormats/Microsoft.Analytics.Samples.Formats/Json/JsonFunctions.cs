@@ -171,8 +171,8 @@ namespace Microsoft.Analytics.Samples.Formats.Json
                 }
                 if (compressByteArray && type == typeof(byte[]))
                 {
-                    var tokenAsByteArray=token.ToObject<byte[]>();
-                    return CompressJsonFramgment(tokenAsByteArray);
+                    byte[] stringBytes = Encoding.UTF8.GetBytes(GetTokenString(token));
+                    return CompressJsonFragment(stringBytes);
                 }
             
                 // We simply delegate to Json.Net for data conversions
@@ -188,7 +188,7 @@ namespace Microsoft.Analytics.Samples.Formats.Json
             }
         }
 
-        private static byte[] CompressJsonFramgment(byte[] bytes)
+        private static byte[] CompressJsonFragment(byte[] bytes)
         {
             if (bytes == null) return null;
             using (var mso = new MemoryStream())

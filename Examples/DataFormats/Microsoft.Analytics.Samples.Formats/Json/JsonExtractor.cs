@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using Microsoft.Analytics.Interfaces;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System;
 
 namespace Microsoft.Analytics.Samples.Formats.Json
 {
@@ -43,12 +44,15 @@ namespace Microsoft.Analytics.Samples.Formats.Json
 
         private int? numOfDocs;
 
+        private Func<Stream, IUpdatableRow, IEnumerable<IRow>> extractFunc;
+
         /// <summary/>
-        public JsonExtractor(string rowpath = null, bool compressByteArray = false, int? numOfDocs=null)
+        public JsonExtractor(string rowpath = null, bool compressByteArray = false, int? numOfDocs=null, bool skipMalformedObjects = false)
         {
             this.rowpath = rowpath;
             this.compressByteArray = compressByteArray;
             this.numOfDocs = numOfDocs;
+            this.extractFunc = skipMalformedObjects ? (Func<Stream, IUpdatableRow, IEnumerable < IRow >>)ExtractFromStreamSuppressed : ExtractFromStream;
 
         }
 
@@ -60,6 +64,35 @@ namespace Microsoft.Analytics.Samples.Formats.Json
 
 
         protected IEnumerable<IRow> ExtractCore(Stream input, IUpdatableRow output)
+        {
+            foreach (var row in extractFunc(input, output))
+                yield return row;
+        }
+
+        IEnumerable<IRow> ExtractFromStreamSuppressed(Stream input, IUpdatableRow output)
+        {
+            IEnumerator<IRow> enumerator= ExtractFromStream(input, output).GetEnumerator();
+            while (true)
+            {
+                IRow ret = null;
+                bool skip = false ;
+                try
+                {
+                    if (!enumerator.MoveNext())
+                        break;
+                    ret = enumerator.Current;
+                }
+                catch (JsonReaderException)
+                {
+                    skip = true;
+                }
+                // the yield statement is outside the try catch block
+                if(!skip)
+                    yield return ret;
+            }
+        }
+
+        IEnumerable<IRow> ExtractFromStream(Stream input, IUpdatableRow output)
         {
             int objectsRead = 0;
             StreamReader sr = new StreamReader(input);
