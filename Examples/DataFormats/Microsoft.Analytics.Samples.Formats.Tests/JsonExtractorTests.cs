@@ -223,20 +223,7 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
 
             Assert.IsTrue(result[0].Get<byte[]>("Value")[0] == 2);
         }
-
-        [TestMethod]
-        public void JsonExtractor_DatatypeByte_Compressed_Extracted()
-        {
-            byte[] bytes = { 2, 4, 6 };
-            var data = new List<SingleColumnPoco<byte[]>>
-            {
-                new SingleColumnPoco<byte[]>() { Value = bytes }
-            };
-
-            var result = ExecuteExtract(data, true);
-            var dresult=DecompressByteArray(result[0].Get<byte[]>("Value"));
-            Assert.IsTrue(dresult[0] == 2);
-        }
+     
 
         [TestMethod]
         public void JsonExtractor_DatatypeNullableByte_Extracted()
@@ -253,21 +240,7 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
             Assert.IsTrue(result[0].Get<byte[]>("Value")[0] == 2);
             Assert.IsTrue(result[1].Get<byte[]>("Value") == null);
         }
-
-        [TestMethod]
-        public void JsonExtractor_DatatypeNullableByte_Compressed_Extracted()
-        {
-            byte[] bytes = { 2, 4, 6 };
-            var data = new List<SingleColumnPoco<byte[]>>
-            {
-                new SingleColumnPoco<byte[]>() { Value = bytes },
-                new SingleColumnPoco<byte[]>() { Value = null }
-            };
-
-            var result = ExecuteExtract(data, true);
-            var dresult = DecompressByteArray(result[0].Get<byte[]>("Value"));
-            Assert.IsTrue(dresult[0] == 2);
-        }
+      
 
         [TestMethod]
         public void JsonExtractor_DatatypeString_Extracted()

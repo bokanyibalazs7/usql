@@ -171,7 +171,14 @@ namespace Microsoft.Analytics.Samples.Formats.Json
                 }
                 if (compressByteArray && type == typeof(byte[]))
                 {
-                    byte[] stringBytes = Encoding.UTF8.GetBytes(GetTokenString(token));
+
+                    string strVal = GetTokenString(token);
+                    if (strVal == null)
+                        return null;
+                    if (strVal == string.Empty)
+                        return new byte[] { };
+
+                    byte[] stringBytes = Encoding.UTF8.GetBytes(strVal);
                     return CompressJsonFragment(stringBytes);
                 }
             
