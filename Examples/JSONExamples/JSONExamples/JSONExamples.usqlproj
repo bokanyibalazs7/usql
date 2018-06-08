@@ -28,11 +28,6 @@
     <Script Include="5-SingleJSONvsMultiJSON.usql" />
     <Script Include="6-MultiLevelExtractionJSON.usql" />
   </ItemGroup>
-  <ItemGroup>
-    <ScriptCode Include="4-ComplexJSON.usql.cs">
-      <DependentUpon>4-ComplexJSON.usql</DependentUpon>
-    </ScriptCode>
-  </ItemGroup>
   <Import Project="$(AppData)\Microsoft\DataLake\MsBuild\1.0\Usql.targets" Condition="'$(BuildingInsideVisualStudio)' == 'true'" />
   <!--target for CICD command line build added by project migration tool-->
   <Import Project="USqlSDKBuild.targets" Condition="'$(BuildingInsideVisualStudio)' != 'true' And  Exists('USqlSDKBuild.targets')" />

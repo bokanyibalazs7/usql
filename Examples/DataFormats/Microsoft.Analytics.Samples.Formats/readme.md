@@ -8,15 +8,15 @@ The JSON and XML samples provide two examples of
 
 This project has been tested to be built from Visual Studio 2015.  Please make sure to install the Azure SDK as well as the Azure Data Lake Tools for Visual Studio.  Once these are installed, you can open the project and build. 
 
-From the command line, once you restore the Nuget packages, you can simply run `msbuild Microsoft.Analytics.Samples.sln` in order to build the project. 
+From the command line, once you restore the Nuget packages, you can simply run `msbuild Microsoft.Analytics.Samples.sln` in order to build the project.
 
 # Deploying
 
-To deploy, you have two options, leveraging the Visual Studio tools, or using the command line tools 
+To deploy, you have two options, leveraging the Visual Studio tools, or using the command line tools
 
 ## Deploying with Visual Studio
 
-1. Inside Visual Studio, navigate to your Data Lake Analytics account 
+1. Inside Visual Studio, navigate to your Data Lake Analytics account
 2. Navigate to the database you want to deploy the Assembly
 
 ![](md_media/navigate_to_database.png)
@@ -40,8 +40,7 @@ To use in U-SQL, it's fairly straightforward
 
 ## Using the XML Extractor
 
-The XML Extractor and Outputter are robust implementations of handling XML documents.  Each document will be processed by a single node, and you can very easily provide a map of the values you want to extract that links the column names to the xpath in the document of the element to extract.  The following script will process a dump from wikipedia and extract some interesting data.  YOu can also find more example uses for XML inside the examples directory.
-
+The XML Extractor and Outputter are robust implementations of handling XML documents.  Each document will be processed by a single node, and you can very easily provide a map of the values you want to extract that links the column names to the xpath in the document of the element to extract.  The following script will process a dump from wikipedia and extract some interesting data.  You can also find more example uses for XML inside the examples directory.
 
 ````
 // note SQL schema here: https://phabricator.wikimedia.org/diffusion/MW/browse/master/maintenance/tables.SQL
@@ -88,7 +87,6 @@ OUTPUT @words TO @"users/mwinkle/output/wiki/wordCount.txt" USING Outputters.Csv
 
 ````
 
-
 ## Using the JSON Extractor
 
 The JSON Extractor treats _the entire input file_ as a single JSON document.  If you have a JSON document per line, see the next two sections. The columns that you try to extract will be extracted from the document.  In this case, I'm extracting out the _id and Revision properties.  Note, it's possible that one of these is a further nested object, in which case you can use the JSON UDF's for subsequent processing. 
@@ -109,7 +107,13 @@ REFERENCE ASSEMBLY [Microsoft.Analytics.Samples.Formats];
 
 ````
 
+### JSON extractor configuration options
 
+These configuration options can be set via constructor parameters:
+- [JSONPath](https://www.newtonsoft.com/json/help/html/SelectToken.htm#SelectTokenJSONPath) expression to select a collection of JSON fragments. Each fragment promotes one row to the result set.
+- bool flag indicating whether byte array columns in the projection list to hold the projected JSON fragment compressed. Useful for circumventing the 4MB size limit of rowset rows.
+- bool flag indicating whether to silently skip malformed JSON objects.
+- number of documents to parse. Useful when one do not want to process the entire input.
 
 ## Using the JSON UDF's
 
@@ -117,7 +121,7 @@ Here we are using the JSON UDF to take a string of JSON (each line in the file i
 
 ````
 REFERENCE ASSEMBLY [Newtonsoft.Json];
-REFERENCE ASSEMBLY [Microsoft.Analytics.Samples.Formats]; 
+REFERENCE ASSEMBLY [Microsoft.Analytics.Samples.Formats];
 
 @trial2 = 
     EXTRACT jsonString string FROM @"/small_radio_json.json" USING Extractors.Tsv(quoting:false);
@@ -151,14 +155,18 @@ TO @"/out.csv"
 USING Outputters.Csv();
 
 ````
+
 ## Using the Multiline-Json Extractor
-There is a limitiation with the approach above, if you have very long JSON documents in the rows. You can hit either the 128kB [limit](https://feedback.azure.com/forums/327234-data-lake/suggestions/13416093-usql-string-data-type-has-a-size-limit-of-128kb) of `string` typed columns or the 4MB limit of row size in the output of the first, text-based extractor.
+
+There is a limitation with the approach above, if you have very long JSON documents in the rows. You can hit either the 128kB [limit](https://feedback.azure.com/forums/327234-data-lake/suggestions/13416093-usql-string-data-type-has-a-size-limit-of-128kb) of `string` typed columns or the 4MB limit of row size in the output of the first, text-based extractor.
 In this case, you can use MultiLineJsonExtractor, which has the following key capabilities:
+
 - handles line splitting using the user-supplied delimiter
 - processes lines in parallel
-- stores compressed JSON fragments in `byte[]` typed columns for further processing
+- uses the column compression feature of its parent, JsonExtractor, to store compressed JSON fragments in `byte[]` typed columns for further processing
 
 First, we create a table to hold all extracted data, some parts in compressed form.
+
 ````
 CREATE TABLE dbo.WikidataImport
 (
@@ -172,7 +180,9 @@ CREATE TABLE dbo.WikidataImport
     ,INDEX cIX_ID CLUSTERED(Id ASC) DISTRIBUTED BY HASH(Id)
 );
 ````
+
 Then we fire up the extractor and load in the staging table. For `byte[]` typed columns, the extractor GZip compresses the corresponding JSON fragment.
+
 ````
 REFERENCE ASSEMBLY wikidata.[Newtonsoft.Json];
 REFERENCE ASSEMBLY wikidata.[Microsoft.Analytics.Samples.Formats]; 
@@ -183,8 +193,8 @@ DECLARE @InputPath string = "/wikidata-json-dump/wikidata-20170918-all.json";
 
 DECLARE @OutputFile string = "/wikidata-json-dump/wikidata-extract-171228.csv";
 
-@RawData = 
-EXTRACT 
+@RawData =
+EXTRACT
  [id] string
 ,[type] string
 ,[labels] byte[]
@@ -205,9 +215,18 @@ SELECT [id],
        [sitelinks]
 FROM @RawData;
 ````
-For working with the compressed colums, please refer to the next section.
+
+For working with the compressed columns, please refer to the next section.
+
+### Multiline-JSON extractor configuration options
+
+All the configuration options of JsonExtractor are available. The multiline-specific options are as follows:
+
+- line delimiting string and its encoding.
+- instead of the overall number of documents to parse, one can specify the number documents per line.
 
 ## Using the JSON UDF's with compressed columns
+
 You can pass a `byte[]` typed column with compressed JSON fragment in it to JsonTuple. First, it decompresses the fragment in-memory, then works as usual, queries the JSON via path expressions.
 
 
@@ -249,6 +268,7 @@ USING Outputters.Csv(outputHeader:true,quoting:true);
 ````
 
 ## Using the Avro Extractor
+
 Avro is a splittable, well-defined, binary data format. It stores data in a row-oriented format and a schema (defined as JSON) describes the metadata including fields and their corresponding data types. See https://avro.apache.org/docs/current/ for more details about Avro.
 
 Given an Avro schema is provided, the Avro Extractor can read Avro files stored in Azure Data Lake Store.

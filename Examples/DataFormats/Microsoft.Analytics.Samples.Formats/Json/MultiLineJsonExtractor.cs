@@ -21,19 +21,20 @@ namespace Microsoft.Analytics.Samples.Formats.Json
         /// Default: the type of the JSON root object determines: collection - this collection will be the fragment collection,
         /// single object - fragment collection containing only the root object (promotes single row)</param>
         /// <param name="compressByteArray">Indicates whether byte array columns hold the corresponding JSON fragment compressed. Deafult: no.</param>
-        /// <param name="numOfDocsPerLine">The number of JSON document per line to parse. Default: the reader will process till the end of the line.</param>
-        /// <param name="rowdelim">Row delimiting characters. Default: \r\n.</param>
+        /// <param name="numOfDocsPerLine">The number of JSON documents per line to parse. Default: the reader will process till the end of the line.</param>
+        /// <param name="linedelim">Line delimiting characters. Default: \r\n.</param>
         /// <param name="encoding">Encoding of row delimiter characters in the JSON input. Default: UTF-8. </param>
+        /// <param name="skipMalformedObjects">Indicates whether to silently skip malformed JSON objects.</param>
         public MultiLineJsonExtractor(string rowpath = null
             , bool compressByteArray = false
             , int? numOfDocsPerLine = null
-            , string rowdelim = "\r\n"
+            , string linedelim = "\r\n"
             , Encoding encoding = null
             , bool skipMalformedObjects = false
            ) 
             : base(rowpath, compressByteArray, numOfDocsPerLine, skipMalformedObjects)
         {
-            this.rowdelim = (encoding ?? Encoding.UTF8).GetBytes(rowdelim);
+            this.rowdelim = (encoding ?? Encoding.UTF8).GetBytes(linedelim);
         }
 
         public override IEnumerable<IRow> Extract(IUnstructuredReader input, IUpdatableRow output)
