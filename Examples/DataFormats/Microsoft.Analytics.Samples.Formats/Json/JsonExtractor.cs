@@ -99,13 +99,11 @@ namespace Microsoft.Analytics.Samples.Formats.Json
                     yield return ret;
             }
         }
-
+                
         IEnumerable<IRow> ExtractFromStream(Stream input, IUpdatableRow output)
         {
             int objectsRead = 0;
-            StreamReader sr = new StreamReader(input);
-            // Json.Net
-            using (var reader = new JsonTextReader(sr))
+            using (var reader = new GetJsonReader(input))
             {
                 // Parse Json one token at a time
                 while ((!numOfDocs.HasValue || objectsRead < numOfDocs) && reader.Read())
@@ -127,6 +125,11 @@ namespace Microsoft.Analytics.Samples.Formats.Json
                     }
                 }
             }
+        }
+
+        protected virtual JsonReader GetJsonReader(Stream stream) 
+        {
+            return (JsonReader) new JsonTextReader(new StreamReader(stream)); 
         }
 
         /// <summary/>

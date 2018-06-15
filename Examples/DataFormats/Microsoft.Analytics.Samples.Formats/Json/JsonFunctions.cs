@@ -13,6 +13,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+//
+// History
+// =======
+// 2015    * Ed Triou    : original version.
+// 2018-01 * Michael Rys : Added support for byte[] to support large JSON structures.
+// 2018-01 * Michael Rys : Added support for SqlArray<string>/SqlArray<byte[]>
+//
+// Future possible work
+// ====================
+// - Add support for SqlMap and nesting of SqlMaps and SqlArrays.
+
 using System;
 using System.Linq;
 using System.Collections.Generic;
@@ -32,7 +43,15 @@ namespace Microsoft.Analytics.Samples.Formats.Json
     public static class JsonFunctions
     {
         private const int BUFFER_SIZE = 8192;
-
+        /// <summary>
+        /// Takes JSON subtree as byte[] (preferred if larger than string size limit in U-SQL)
+        /// We assume that the byte[] is actually a UTF-8 encoded string. If the byte[] is something else, JsonTuple should fail.
+        /// </summary>
+        public static SqlMap<string, string> JsonTuple(byte[] json, params string[] paths)
+        {
+            // Delegate
+            return JsonTuple<string>(json, paths);
+        }
         /// <summary>
         /// JsonTuple("json", [$e1], [$e2], ...)
         ///     1. Parse Json (once for all paths)
@@ -47,15 +66,18 @@ namespace Microsoft.Analytics.Samples.Formats.Json
         ///     JsonTuple(json, "$[?(@.id > 1)].id")       -> path expression      MAP{ {id, 2 }, {order[7].id, 4}, ...                            }
         ///     JsonTuple(json)                            -> children             MAP{ {id, 1 }, {name, Ed}, { email, donotreply@live,com }, ...  }
         /// </summary>
-        public static SqlMap<string, string>                        JsonTuple(string json, params string[] paths)
+        // Takes JSON subtree as string
+        public static SqlMap<string, string> JsonTuple(string json, params string[] paths)
         {
             // Delegate
             return JsonTuple<string>(json, paths);
         }
 
-        public static SqlMap<string, string> JsonTuple(byte[] compressedJson, params string[] paths)
+        public static SqlMap<string, T> jsonTupleCompressed<T>(byte[] json_bytes, params string[] paths)
         {
-            return JsonTuple<string>(compressedJson, paths);
+            var json = System.Text.Encoding.UTF8.GetString(json_bytes);
+            // Delegate now to the string input
+            return JsonTuple<T>(json, paths);
         }
 
         public static SqlMap<string, T>                        JsonTuple<T>(byte[] compressedJson, params string[] paths)
@@ -71,8 +93,10 @@ namespace Microsoft.Analytics.Samples.Formats.Json
             return JsonTuple<T>(jsonString, paths);
         }
 
-        /// <summary/>
-        public static SqlMap<string, T>                             JsonTuple<T>(string json, params string[] paths)
+        /// <summary>
+        /// Takes JSON subtree as string
+        /// </summary>
+        public static SqlMap<string, T> JsonTuple<T>(string json, params string[] paths)
         {
             // Parse (once)
             //  Note: Json.Net NullRefs on <null> input Json
@@ -126,8 +150,10 @@ namespace Microsoft.Analytics.Samples.Formats.Json
             return root.Children();
         }
 
-        /// <summary/>
-        internal static string                                      GetTokenString(JToken token)
+        /// <summary>
+        ///  convert the JToken value to the appropriate string serialization of the JToken's type.
+        ///  </summary>
+        internal static string GetTokenString(JToken token)
         {
             switch(token.Type)
             {
@@ -160,28 +186,38 @@ namespace Microsoft.Analytics.Samples.Formats.Json
             }
         }
 
-        /// <summary/>
         internal static object                                      ConvertToken(JToken token, Type type, bool compressByteArray = false)
         {
             try
             { 
+                // If the expected type is string, we convert the JToken value to the appropriate string serialization
                 if(type == typeof(string))
                 {
                     return JsonFunctions.GetTokenString(token);
                 }
-                if (compressByteArray && type == typeof(byte[]))
+                // If the expected type is byte[], we serialize the JToken's string representation into a byte[] (UTF-8 encoded).
+                else if (type == typeof(byte[]))
                 {
-
-                    string strVal = GetTokenString(token);
-                    if (strVal == null)
-                        return null;
-                    if (strVal == string.Empty)
-                        return new byte[] { };
-
-                    byte[] stringBytes = Encoding.UTF8.GetBytes(strVal);
-                    return CompressJsonFragment(stringBytes);
+					 byte[] stringBytes=JsonFunctions.GetTokenByteArray(token)
+					 if (compressByteArray)
+                	 {            	                  
+	                    return CompressJsonFragment(stringBytes);
+                	 }
+                    return stringBytes;
                 }
-            
+                // To support JSON arrays and reduce the need to map long arrays first to byte[],
+                // we map either the JToken Array into the SqlArray,
+                // or otherwise serialize the JToken's string representation into a singleton array.
+                else if (type == typeof(SqlArray<string>))
+                {
+                    return JsonFunctions.GetTokenSqlArrayOfString(token);
+                }
+                // If an item in the array is still too long for a string, a SqlArray<byte[]> can be used
+                // to work around the string size limit,
+                else if (type == typeof(SqlArray<byte[]>))
+                {
+                    return JsonFunctions.GetTokenSqlArrayOfBytes(token);
+                }                           
                 // We simply delegate to Json.Net for data conversions
                 return token.ToObject(type);
             }
@@ -208,6 +244,156 @@ namespace Microsoft.Analytics.Samples.Formats.Json
                 }
                 byte[] retVal = mso.ToArray();
                 return retVal;
+            }
+        }
+
+        /// <summary>
+        ///  Convert the JToken value to the appropriate byte[] serialization of the JToken's type. 
+        ///  If the JToken type is not supported (e.g., Raw and Bytes), an error is raised.
+        ///  
+        ///  We convert non-string values into strings (and not some more efficient variable-binary encoding)
+        ///  to handle the case where data is heterogeneous between different instances and need to be surfaced consistently. 
+        ///  E.g., age is a string on one object and an integer on the other. This allows the query writer to handle all values the same.
+        ///  </summary>
+        internal static byte[] GetTokenByteArray(JToken token)
+        {
+            switch (token.Type)
+            {
+                case JTokenType.Null:
+                case JTokenType.Undefined:
+                    return null;
+
+                // in case of string, use UTF-8 encoding to save space over UTF-16 assuming most JSON is numbers and ASCII.
+                // A future extension could offer other encodings as options.
+                case JTokenType.String:
+                    return Encoding.UTF8.GetBytes((string)token);
+
+                // For non-scalar objects, we serialize them into a string before we convert them into byte[].
+                case JTokenType.Object:
+                case JTokenType.Array:
+                    return Encoding.UTF8.GetBytes(token.ToString());
+
+                // For numeric scalars we simply delegate to Json.Net (JsonConvert) for string conversions.
+                // This ensures the string conversion matches the JsonTextWriter.
+                // Then we convert it into a UTF-8 byte array to keep it consistent with the textual representation. 
+                case JTokenType.Integer:
+                case JTokenType.Float:
+                case JTokenType.Boolean:
+                    return Encoding.UTF8.GetBytes(JsonConvert.ToString(((JValue)token).Value));
+
+                // For non-numeric scalars we simply delegate to Json.Net (JsonConvert) for string conversions
+                // Note: We want to leverage JsonConvert to ensure the string conversion matches the JsonTextWriter
+                //       However that places surrounding quotes for these data types. Thus we drop the quotes.
+                // Then we convert it into a UTF-8 byte array to keep it consistent with the textual representation. 
+                case JTokenType.Date:
+                case JTokenType.TimeSpan:
+                case JTokenType.Guid:
+                    var v = JsonConvert.ToString(((JValue)token).Value);
+                    return Encoding.UTF8.GetBytes(
+                        v != null && v.Length > 2 && v[0] == '"' && v[v.Length - 1] == '"' ? v.Substring(1, v.Length - 2) : v
+                        );
+
+                default:
+                    // For other token types (e.g., Raw and Bytes etc) we currently just raise an error.
+                    throw new JsonSerializationException(
+                        string.Format(typeof(JsonFunctions).Namespace + " converting JSON Token '{0}' from type '{1}' to 'byte[]' is not supported.", token.Path, token.Type.ToString()),
+                        null);
+            }
+        }
+
+        /// <summary>
+        ///  convert the JToken value to one of:
+        ///  If the JToken is an array, we map it into the corresponding Array with each value being represented as a string,
+        ///  otherwise serialize the JToken's string representation into a singleton string array.
+        ///  
+        ///  We allow lifting of singletons into arrays because JSON has no schema and may use an array on one property instance
+        ///  and a scalar on the next. 
+        ///  
+        ///  Note: a string in an array is still limited in size like a normal string.
+        ///  </summary>
+        internal static SqlArray<string> GetTokenSqlArrayOfString(JToken token)
+        {
+            switch (token.Type)
+            {
+                case JTokenType.Null:
+                case JTokenType.Undefined:
+                    return null;
+
+                case JTokenType.String:
+                    return SqlArray.Create(Enumerable.Repeat((string)token, 1));
+
+                case JTokenType.Array:
+                    return SqlArray.Create(ApplyPath<string>(token, null).Select((kv) => kv.Value));
+
+                case JTokenType.Integer:
+                case JTokenType.Float:
+                case JTokenType.Boolean:
+                    // For scalars we simply delegate to Json.Net (JsonConvert) for string conversions
+                    //  This ensures the string conversion matches the JsonTextWriter
+                    return SqlArray.Create(Enumerable.Repeat(JsonConvert.ToString(((JValue)token).Value),1));
+
+                case JTokenType.Date:
+                case JTokenType.TimeSpan:
+                case JTokenType.Guid:
+                    // For scalars we simply delegate to Json.Net (JsonConvert) for string conversions
+                    //  Note: We want to leverage JsonConvert to ensure the string conversion matches the JsonTextWriter
+                    //        However that places surrounding quotes for these data types.
+                    var v = JsonConvert.ToString(((JValue)token).Value);
+                    return SqlArray.Create(Enumerable.Repeat(
+                        v != null && v.Length > 2 && v[0] == '"' && v[v.Length - 1] == '"' ? v.Substring(1, v.Length - 2) : v
+                        , 1));
+
+                default:
+                    // For non-array containers we delegate to Json.Net (JToken.ToString/WriteTo) which is capable of serializing all data types, including nested containers
+                    return SqlArray.Create(Enumerable.Repeat(token.ToString(),1));
+            }
+        }
+
+        /// <summary>
+        ///  convert the JToken value to one of:
+        ///  If the JToken is an array, we map it into the corresponding Array with each value being represented as a byte array,
+        ///  otherwise serialize the JToken's string representation into a singleton array of a byte array.
+        ///  
+        ///  We allow lifting of singletons into arrays because JSON has no schema and may use an array on one property instance
+        ///  and a scalar on the next. 
+        ///  
+        ///  Note: This is needed if you suspect your string value to be larger than a string size.
+        ///  </summary>
+        internal static SqlArray<byte[]> GetTokenSqlArrayOfBytes(JToken token)
+        {
+            switch (token.Type)
+            {
+                case JTokenType.Null:
+                case JTokenType.Undefined:
+                    return null;
+
+                case JTokenType.String:
+                    return SqlArray.Create(Enumerable.Repeat(Encoding.UTF8.GetBytes((string)token), 1));
+
+                case JTokenType.Array:
+                    return SqlArray.Create(ApplyPath<string>(token, null).Select((kv) => Encoding.UTF8.GetBytes(kv.Value)));
+
+                case JTokenType.Integer:
+                case JTokenType.Float:
+                case JTokenType.Boolean:
+                    // For scalars we simply delegate to Json.Net (JsonConvert) for string conversions
+                    //  This ensures the string conversion matches the JsonTextWriter
+                    return SqlArray.Create(Enumerable.Repeat(Encoding.UTF8.GetBytes(JsonConvert.ToString(((JValue)token).Value)), 1));
+
+                case JTokenType.Date:
+                case JTokenType.TimeSpan:
+                case JTokenType.Guid:
+                    // For scalars we simply delegate to Json.Net (JsonConvert) for string conversions
+                    //  Note: We want to leverage JsonConvert to ensure the string conversion matches the JsonTextWriter
+                    //        However that places surrounding quotes for these data types.
+                    var v = JsonConvert.ToString(((JValue)token).Value);
+                    return SqlArray.Create(Enumerable.Repeat( Encoding.UTF8.GetBytes(
+                        v != null && v.Length > 2 && v[0] == '"' && v[v.Length - 1] == '"' ? v.Substring(1, v.Length - 2) : v)
+                        , 1));
+
+                default:
+                    // For non-array containers we delegate to Json.Net (JToken.ToString/WriteTo) which is capable of serializing all data types, including nested containers
+                    return SqlArray.Create(Enumerable.Repeat(Encoding.UTF8.GetBytes(token.ToString()), 1));
             }
         }
     }
