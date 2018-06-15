@@ -4,12 +4,12 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>77a1b3a5-fe89-4276-a083-63f103cefa8f</ProjectGuid>
+    <ProjectGuid>fd4830ed-213b-4c23-be5d-4b9d3957ccc2</ProjectGuid>
     <OutputType>File</OutputType>
     <AssemblyName>Algebra.xml</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <Name>ImageQueries</Name>
-    <RootNamespace>ImageQueries</RootNamespace>
+    <Name>SQLKonferenz2017-Keynote</Name>
+    <RootNamespace>SQLKonferenz2017-Keynote</RootNamespace>
     <RuntimeVersion>default</RuntimeVersion>
     <OutputStreamPath>C:\LocalRunDataRoot</OutputStreamPath>
   </PropertyGroup>
@@ -22,11 +22,21 @@
     <OutputPath>bin\Release\</OutputPath>
   </PropertyGroup>
   <ItemGroup>
-    <Script Include="2-Extract+UDFs.usql" />
-    <Script Include="1-RegisterAsm.usql" />
-    <Script Include="3-Extract+Processor.usql" />
-    <Script Include="4-ExtractFeatures.usql" />
-    <Script Include="5-CognitiveImageProcessing.usql" />
+    <Script Include="1.2-Fileset.usql" />
+    <Script Include="2-Table.usql" />
+    <Script Include="1.1-Files.usql" />
+    <Script Include="3.1-Familiar-CSharp.usql" />
+    <Script Include="3.2-Familiar-SQL.usql" />
+    <Script Include="4-USQL-ObjectModel.usql" />
+    <Script Include="5-USQL-UDOs.usql" />
+  </ItemGroup>
+  <ItemGroup>
+    <ScriptCode Include="3.1-Familiar-CSharp.usql.cs">
+      <DependentUpon>3.1-Familiar-CSharp.usql</DependentUpon>
+    </ScriptCode>
+    <ScriptCode Include="5-USQL-UDOs.usql.cs">
+      <DependentUpon>5-USQL-UDOs.usql</DependentUpon>
+    </ScriptCode>
   </ItemGroup>
   <Import Project="$(AppData)\Microsoft\DataLake\MsBuild\1.0\Usql.targets" />
 </Project>

@@ -4,14 +4,13 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>77a1b3a5-fe89-4276-a083-63f103cefa8f</ProjectGuid>
+    <ProjectGuid>c8cf2145-b9f3-401d-ad6a-888744dff1ff</ProjectGuid>
     <OutputType>File</OutputType>
     <AssemblyName>Algebra.xml</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <Name>ImageQueries</Name>
-    <RootNamespace>ImageQueries</RootNamespace>
+    <Name>Spring2018-ReleaseNotes</Name>
+    <RootNamespace>Spring2018-ReleaseNotes</RootNamespace>
     <RuntimeVersion>default</RuntimeVersion>
-    <OutputStreamPath>C:\LocalRunDataRoot</OutputStreamPath>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -22,11 +21,10 @@
     <OutputPath>bin\Release\</OutputPath>
   </PropertyGroup>
   <ItemGroup>
-    <Script Include="2-Extract+UDFs.usql" />
-    <Script Include="1-RegisterAsm.usql" />
-    <Script Include="3-Extract+Processor.usql" />
-    <Script Include="4-ExtractFeatures.usql" />
-    <Script Include="5-CognitiveImageProcessing.usql" />
+    <Script Include="Script.usql" />
+    <ScriptCode Include="Script.usql.cs">
+      <DependentUpon>Script.usql</DependentUpon>
+    </ScriptCode>
   </ItemGroup>
   <Import Project="$(AppData)\Microsoft\DataLake\MsBuild\1.0\Usql.targets" />
 </Project>
