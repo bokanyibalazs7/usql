@@ -46,7 +46,15 @@ namespace Microsoft.Analytics.Samples.Formats.Json
 
         private Func<Stream, IUpdatableRow, IEnumerable<IRow>> extractFunc;
 
-        /// <summary/>
+        /// <summary>
+        /// Initializes a new instance of the <see cref="JsonExtractor"/> class.
+        /// </summary>
+        /// <param name="rowpath">Selector expression to select a collection of JSON fragments. Each fragment ought to promote one row in the result set. 
+        /// Default: the type of the JSON root object determines: collection - this collection will be the fragment collection,
+        /// single object - fragment collection containing only the root object (promotes single row)</param>
+        /// <param name="compressByteArray">Indicates whether byte array columns hold the corresponding JSON fragment compressed. Deafult: no.</param>
+        /// <param name="numOfDocs">The number of JSON documents to parse. Default: the reader will process till the end of the line.</param>
+        /// <param name="skipMalformedObjects">Indicates whether to silently skip malformed JSON objects. Default: false.</param>
         public JsonExtractor(string rowpath = null, bool compressByteArray = false, int? numOfDocs=null, bool skipMalformedObjects = false)
         {
             this.rowpath = rowpath;

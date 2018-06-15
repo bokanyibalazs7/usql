@@ -15,7 +15,7 @@ namespace Microsoft.Analytics.Samples.Formats.Json
         private readonly byte[] rowdelim;
 
         /// <summary>
-        /// Initializes a new instance of the MultiLineJsonExtractor class.
+        /// Initializes a new instance of the <see cref="MultiLineJsonExtractor"/> class.
         /// </summary>
         /// <param name="rowpath">Selector expression to select a collection of JSON fragments. Each fragment ought to promote one row in the result set. 
         /// Default: the type of the JSON root object determines: collection - this collection will be the fragment collection,
@@ -24,7 +24,7 @@ namespace Microsoft.Analytics.Samples.Formats.Json
         /// <param name="numOfDocsPerLine">The number of JSON documents per line to parse. Default: the reader will process till the end of the line.</param>
         /// <param name="linedelim">Line delimiting characters. Default: \r\n.</param>
         /// <param name="encoding">Encoding of row delimiter characters in the JSON input. Default: UTF-8. </param>
-        /// <param name="skipMalformedObjects">Indicates whether to silently skip malformed JSON objects.</param>
+        /// <param name="skipMalformedObjects">Indicates whether to silently skip malformed JSON objects. Default: false.</param>
         public MultiLineJsonExtractor(string rowpath = null
             , bool compressByteArray = false
             , int? numOfDocsPerLine = null

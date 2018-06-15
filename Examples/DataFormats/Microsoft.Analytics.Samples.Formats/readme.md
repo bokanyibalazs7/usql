@@ -6,7 +6,7 @@ The JSON and XML samples provide two examples of
  
 # Building
 
-This project has been tested to be built from Visual Studio 2015.  Please make sure to install the Azure SDK as well as the Azure Data Lake Tools for Visual Studio.  Once these are installed, you can open the project and build. 
+This project has been tested to be built from Visual Studio 2017.  Please make sure to install the Azure SDK as well as the Azure Data Lake Tools for Visual Studio.  Once these are installed, you can open the project and build. 
 
 From the command line, once you restore the Nuget packages, you can simply run `msbuild Microsoft.Analytics.Samples.sln` in order to build the project.
 
@@ -89,7 +89,7 @@ OUTPUT @words TO @"users/mwinkle/output/wiki/wordCount.txt" USING Outputters.Csv
 
 ## Using the JSON Extractor
 
-The JSON Extractor treats _the entire input file_ as a single JSON document.  If you have a JSON document per line, see the next two sections. The columns that you try to extract will be extracted from the document.  In this case, I'm extracting out the _id and Revision properties.  Note, it's possible that one of these is a further nested object, in which case you can use the JSON UDF's for subsequent processing. 
+The JSON Extractor treats _the entire input file_ as a single JSON document.  If you have a JSON document per line, see the next two sections. The columns that you try to extract will be extracted from the document.  In this case, I'm extracting out the _id and Revision properties.  Note, it's possible that one of these is a further nested object, in which case you can use the JSON UDF's for subsequent processing.
 
 
 
@@ -113,7 +113,7 @@ These configuration options can be set via constructor parameters:
 - [JSONPath](https://www.newtonsoft.com/json/help/html/SelectToken.htm#SelectTokenJSONPath) expression to select a collection of JSON fragments. Each fragment promotes one row to the result set.
 - bool flag indicating whether byte array columns in the projection list to hold the projected JSON fragment compressed. Useful for circumventing the 4MB size limit of rowset rows.
 - bool flag indicating whether to silently skip malformed JSON objects.
-- number of documents to parse. Useful when one do not want to process the entire input.
+- number of documents to parse. Useful when you do not want to process the entire input.
 
 ## Using the JSON UDF's
 
@@ -185,7 +185,7 @@ Then we fire up the extractor and load in the staging table. For `byte[]` typed 
 
 ````
 REFERENCE ASSEMBLY wikidata.[Newtonsoft.Json];
-REFERENCE ASSEMBLY wikidata.[Microsoft.Analytics.Samples.Formats]; 
+REFERENCE ASSEMBLY wikidata.[Microsoft.Analytics.Samples.Formats];
 
 USING Microsoft.Analytics.Samples.Formats.Json;
 
@@ -223,7 +223,7 @@ For working with the compressed columns, please refer to the next section.
 All the configuration options of JsonExtractor are available. The multiline-specific options are as follows:
 
 - line delimiting string and its encoding.
-- instead of the overall number of documents to parse, one can specify the number documents per line.
+- instead of the overall number of documents to parse, you can specify the number documents per line.
 
 ## Using the JSON UDF's with compressed columns
 
