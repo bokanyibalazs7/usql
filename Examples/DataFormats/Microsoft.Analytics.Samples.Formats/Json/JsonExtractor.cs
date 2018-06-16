@@ -103,7 +103,7 @@ namespace Microsoft.Analytics.Samples.Formats.Json
         IEnumerable<IRow> ExtractFromStream(Stream input, IUpdatableRow output)
         {
             int objectsRead = 0;
-            using (var reader = new GetJsonReader(input))
+            using (var reader = GetJsonReader(input))
             {
                 // Parse Json one token at a time
                 while ((!numOfDocs.HasValue || objectsRead < numOfDocs) && reader.Read())

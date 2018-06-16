@@ -73,24 +73,24 @@ namespace Microsoft.Analytics.Samples.Formats.Json
             return JsonTuple<string>(json, paths);
         }
 
-        public static SqlMap<string, T> jsonTupleCompressed<T>(byte[] json_bytes, params string[] paths)
+        public static SqlMap<string, T> JsonTuple<T>(byte[] json_bytes, params string[] paths)
         {
             var json = System.Text.Encoding.UTF8.GetString(json_bytes);
             // Delegate now to the string input
             return JsonTuple<T>(json, paths);
         }
 
-        public static SqlMap<string, T>                        JsonTuple<T>(byte[] compressedJson, params string[] paths)
+        public static SqlMap<string, T> JsonTupleCompressed<T>(byte[] compressedJson, params string[] paths)
         {
-            string jsonString;
+            byte[] decompressedBytes;
             using (var compressedMs = new MemoryStream(compressedJson))
             using (var decompressedMs = new MemoryStream())
             using (var gzs = new BufferedStream(new GZipStream(compressedMs, CompressionMode.Decompress), BUFFER_SIZE))
             {
                 gzs.CopyTo(decompressedMs);
-                jsonString = Encoding.UTF8.GetString(decompressedMs.ToArray());
+                decompressedBytes = decompressedMs.ToArray();                
             }
-            return JsonTuple<T>(jsonString, paths);
+            return JsonTuple<T>(decompressedBytes, paths);
         }
 
         /// <summary>
@@ -198,7 +198,7 @@ namespace Microsoft.Analytics.Samples.Formats.Json
                 // If the expected type is byte[], we serialize the JToken's string representation into a byte[] (UTF-8 encoded).
                 else if (type == typeof(byte[]))
                 {
-					 byte[] stringBytes=JsonFunctions.GetTokenByteArray(token)
+                     byte[] stringBytes = JsonFunctions.GetTokenByteArray(token);
 					 if (compressByteArray)
                 	 {            	                  
 	                    return CompressJsonFragment(stringBytes);
