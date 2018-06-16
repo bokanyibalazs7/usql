@@ -186,7 +186,7 @@ namespace Microsoft.Analytics.Samples.Formats.Json
             }
         }
 
-        internal static object                                      ConvertToken(JToken token, Type type, bool compressByteArray = false)
+        internal static object ConvertToken(JToken token, Type type, JsonExtractor.ByteArrayProjectionMode byteArrayProjectionMode = JsonExtractor.ByteArrayProjectionMode.Normal)
         {
             try
             { 
@@ -196,10 +196,10 @@ namespace Microsoft.Analytics.Samples.Formats.Json
                     return JsonFunctions.GetTokenString(token);
                 }
                 // If the expected type is byte[], we serialize the JToken's string representation into a byte[] (UTF-8 encoded).
-                else if (type == typeof(byte[]))
+                else if (type == typeof(byte[]) && byteArrayProjectionMode != JsonExtractor.ByteArrayProjectionMode.Normal)
                 {
                      byte[] stringBytes = JsonFunctions.GetTokenByteArray(token);
-					 if (compressByteArray)
+					 if (byteArrayProjectionMode == JsonExtractor.ByteArrayProjectionMode.BytesStringCompressed)
                 	 {            	                  
 	                    return CompressJsonFragment(stringBytes);
                 	 }

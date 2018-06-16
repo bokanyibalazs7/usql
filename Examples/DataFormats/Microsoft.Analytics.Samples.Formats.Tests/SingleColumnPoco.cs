@@ -11,7 +11,17 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
     public class SingleColumnPoco<T>
     {
         [DataMember]
-        public T Value { get; set; }
+        public T Value { get; set; }            
 
+        public override bool Equals(object obj)
+        {
+            var other = obj as SingleColumnPoco<T>;
+            return other != null && Value.Equals(other.Value);
+        }
+
+        public override int GetHashCode()
+        {
+            return new { Value }.GetHashCode();
+        }
     }
 }

@@ -20,15 +20,15 @@ namespace Microsoft.Analytics.Samples.Formats.Json
         /// <param name="rowpath">The base path to start from.</param>
         /// <param name="bypassWarning">If you want an error when a path isn't found leave as false.  If you don't want errors and a null result, set to true.</param>
         /// <param name="jsonPaths">Paths in the Json Document.  If it isn't found at the "rowpath" level it will recurse to the top of the tree to locate it.</param>
-        public MultiLevelJsonExtractor(string rowpath = null, bool compressByteArray = false, bool bypassWarning = false, params string[] jsonPaths)
-            : base(rowpath, compressByteArray)
+        public MultiLevelJsonExtractor(string rowpath = null, ByteArrayProjectionMode byteArrayProjectionMode = ByteArrayProjectionMode.Normal, bool bypassWarning = false, params string[] jsonPaths)
+            : base(rowpath, byteArrayProjectionMode)
         {
             this.jsonPaths = jsonPaths;
             this.bypassWarning = bypassWarning;
         }
 
         public MultiLevelJsonExtractor(string rowpath = null, bool bypassWarning = false, params string[] jsonPaths)
-           : this(rowpath, false, bypassWarning, jsonPaths)
+           : this(rowpath, ByteArrayProjectionMode.Normal, bypassWarning, jsonPaths)
         {
            
         }
@@ -50,7 +50,7 @@ namespace Microsoft.Analytics.Samples.Formats.Json
                     if (jObj != default(JToken))
                     {
                         var schemaColumn = row.Schema[i];
-                        value = JsonFunctions.ConvertToken(jObj, schemaColumn.Type, compressByteArray) ?? schemaColumn.DefaultValue;
+                        value = JsonFunctions.ConvertToken(jObj, schemaColumn.Type, byteArrayProjectionMode) ?? schemaColumn.DefaultValue;
                     }
                     row.Set<object>(i, value);
                 }

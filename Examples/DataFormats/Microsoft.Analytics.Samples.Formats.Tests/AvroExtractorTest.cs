@@ -1,11 +1,8 @@
 ﻿using Microsoft.Analytics.Interfaces;
-using Microsoft.Analytics.Types.Sql;
 using Microsoft.Analytics.UnitTest;
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.Analytics.Samples.Formats.ApacheAvro;
 using Avro.Generic;

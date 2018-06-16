@@ -1,5 +1,4 @@
 ﻿using Microsoft.Analytics.Interfaces;
-using Microsoft.Analytics.Types.Sql;
 using Microsoft.Analytics.UnitTest;
 using System;
 using System.Collections.Generic;
@@ -10,7 +9,6 @@ using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.Analytics.Samples.Formats.Json;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace Microsoft.Analytics.Samples.Formats.Tests
 {
@@ -240,7 +238,24 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
             Assert.IsTrue(result[0].Get<byte[]>("Value")[0] == 2);
             Assert.IsTrue(result[1].Get<byte[]>("Value") == null);
         }
-      
+
+        [TestMethod]
+        public void JsonExtractor_DataTypeSubJson_ByteArray()
+        {
+            byte[] bytes = { 2, 4, 6 };
+            var subdata = new SingleColumnPoco<string> { Value = "foo" };
+            var data = new List<SingleColumnPoco<SingleColumnPoco<string>>>
+            {
+                new SingleColumnPoco<SingleColumnPoco<string>>() { Value= subdata },                
+            };
+
+            var result = ExecuteExtract(data, byteArrayProjectionMode:JsonExtractor.ByteArrayProjectionMode.BytesString);
+            
+            string resultString = Encoding.UTF8.GetString(result[0].Get<byte[]>("Value"));
+            SingleColumnPoco<string> resultPoco = JsonConvert.DeserializeObject<SingleColumnPoco<string>>(resultString);
+            Assert.IsTrue(subdata.Equals(resultPoco));
+        }
+
 
         [TestMethod]
         public void JsonExtractor_DatatypeString_Extracted()
@@ -266,7 +281,7 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
                 new SingleColumnPoco<string>() { Value = "foo" }
             };
 
-            var result = ExecuteExtract(data, compressByteArray:true);
+            var result = ExecuteExtract(data, byteArrayProjectionMode:JsonExtractor.ByteArrayProjectionMode.BytesStringCompressed);
 
             Assert.IsTrue(Encoding.UTF8.GetString(DecompressByteArray(result[0].Get<byte[]>("Value"))) == "asdf");
             Assert.IsTrue(Encoding.UTF8.GetString(DecompressByteArray(result[1].Get<byte[]>("Value"))) == "foo");
@@ -406,14 +421,17 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
 
 
         private IList<IRow> ExecuteExtract<T>(List<SingleColumnPoco<T>> data
-            , bool compressByteArray = false
+            , JsonExtractor.ByteArrayProjectionMode byteArrayProjectionMode = JsonExtractor.ByteArrayProjectionMode.Normal
             , Func<string,string> convertJsonString = null
             , int? numOfDocs=null
             , bool multiline = false
             , string rowdelim = "\r\n"
             , bool skipMalformedObjects = false)
         {
-            var output = (compressByteArray ? SingleColumnRowGenerator<byte[]>() : SingleColumnRowGenerator<T>()).AsUpdatable();
+            var output = (byteArrayProjectionMode == JsonExtractor.ByteArrayProjectionMode.Normal 
+                ? SingleColumnRowGenerator<T>() 
+                : SingleColumnRowGenerator<byte[]>())
+                .AsUpdatable();
 
             var jsonString = JsonConvert.SerializeObject(data);
             if (convertJsonString != null)
@@ -422,8 +440,8 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
             {
                 var reader = new USqlStreamReader(dataStream);
                 var extractor = 
-                    multiline ? new MultiLineJsonExtractor(linedelim: rowdelim, compressByteArray: compressByteArray, numOfDocsPerLine: numOfDocs, skipMalformedObjects: skipMalformedObjects)
-                    : new JsonExtractor(compressByteArray:compressByteArray, numOfDocs:numOfDocs, skipMalformedObjects : skipMalformedObjects);
+                    multiline ? new MultiLineJsonExtractor(linedelim: rowdelim, byteArrayProjectionMode: byteArrayProjectionMode, numOfDocsPerLine: numOfDocs, skipMalformedObjects: skipMalformedObjects)
+                    : new JsonExtractor(byteArrayProjectionMode: byteArrayProjectionMode, numOfDocs:numOfDocs, skipMalformedObjects : skipMalformedObjects);
                 return extractor.Extract(reader, output).ToList();
             }
         }

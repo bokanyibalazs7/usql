@@ -26,13 +26,13 @@ namespace Microsoft.Analytics.Samples.Formats.Json
         /// <param name="encoding">Encoding of row delimiter characters in the JSON input. Default: UTF-8. </param>
         /// <param name="skipMalformedObjects">Indicates whether to silently skip malformed JSON objects. Default: false.</param>
         public MultiLineJsonExtractor(string rowpath = null
-            , bool compressByteArray = false
+            , ByteArrayProjectionMode byteArrayProjectionMode = ByteArrayProjectionMode.Normal
             , int? numOfDocsPerLine = null
             , string linedelim = "\r\n"
             , Encoding encoding = null
             , bool skipMalformedObjects = false
            ) 
-            : base(rowpath, compressByteArray, numOfDocsPerLine, skipMalformedObjects)
+            : base(rowpath, byteArrayProjectionMode, numOfDocsPerLine, skipMalformedObjects)
         {
             this.rowdelim = (encoding ?? Encoding.UTF8).GetBytes(linedelim);
         }

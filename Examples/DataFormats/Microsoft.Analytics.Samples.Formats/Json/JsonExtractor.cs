@@ -37,10 +37,18 @@ namespace Microsoft.Analytics.Samples.Formats.Json
     [SqlUserDefinedExtractor(AtomicFileProcessing=true)]
     public class JsonExtractor : IExtractor
     {
+        public enum ByteArrayProjectionMode
+        {
+            Normal,
+            BytesString,
+            BytesStringCompressed,
+        }
+
+
         /// <summary/>
         private string rowpath;
 
-        protected bool compressByteArray;
+        protected ByteArrayProjectionMode byteArrayProjectionMode;
 
         private int? numOfDocs;
 
@@ -52,13 +60,13 @@ namespace Microsoft.Analytics.Samples.Formats.Json
         /// <param name="rowpath">Selector expression to select a collection of JSON fragments. Each fragment ought to promote one row in the result set. 
         /// Default: the type of the JSON root object determines: collection - this collection will be the fragment collection,
         /// single object - fragment collection containing only the root object (promotes single row)</param>
-        /// <param name="compressByteArray">Indicates whether byte array columns hold the corresponding JSON fragment compressed. Deafult: no.</param>
+        /// <param name="byteArrayProjectionMode">Indicates whether byte array columns hold the corresponding JSON fragment compressed. Deafult: no.</param>
         /// <param name="numOfDocs">The number of JSON documents to parse. Default: the reader will process till the end of the line.</param>
         /// <param name="skipMalformedObjects">Indicates whether to silently skip malformed JSON objects. Default: false.</param>
-        public JsonExtractor(string rowpath = null, bool compressByteArray = false, int? numOfDocs=null, bool skipMalformedObjects = false)
+        public JsonExtractor(string rowpath = null, ByteArrayProjectionMode byteArrayProjectionMode = ByteArrayProjectionMode.Normal, int? numOfDocs=null, bool skipMalformedObjects = false)
         {
             this.rowpath = rowpath;
-            this.compressByteArray = compressByteArray;
+            this.byteArrayProjectionMode = byteArrayProjectionMode;
             this.numOfDocs = numOfDocs;
             this.extractFunc = skipMalformedObjects ? (Func<Stream, IUpdatableRow, IEnumerable < IRow >>)ExtractFromStreamSuppressed : ExtractFromStream;
 
@@ -176,7 +184,7 @@ namespace Microsoft.Analytics.Samples.Formats.Json
                     //      ie: SELECT DateTime.Parse(datetime) AS datetime, ...
                     //  Note: Json.Net incorrectly returns null even for some non-nullable types (sbyte)
                     //      We have to correct this by using the default(T) so it can fit into a row value
-                    value = JsonFunctions.ConvertToken(token, c.Type, compressByteArray) ?? c.DefaultValue;
+                    value = JsonFunctions.ConvertToken(token, c.Type, byteArrayProjectionMode) ?? c.DefaultValue;
                 }
 
                 // Update
