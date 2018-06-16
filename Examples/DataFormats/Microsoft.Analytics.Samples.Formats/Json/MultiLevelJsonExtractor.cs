@@ -20,6 +20,7 @@ namespace Microsoft.Analytics.Samples.Formats.Json
         /// <param name="rowpath">The base path to start from.</param>
         /// <param name="bypassWarning">If you want an error when a path isn't found leave as false.  If you don't want errors and a null result, set to true.</param>
         /// <param name="jsonPaths">Paths in the Json Document.  If it isn't found at the "rowpath" level it will recurse to the top of the tree to locate it.</param>
+        /// <param name="byteArrayProjectionMode">Controls how to assign value to byte array columns.</param>
         public MultiLevelJsonExtractor(string rowpath = null, ByteArrayProjectionMode byteArrayProjectionMode = ByteArrayProjectionMode.Normal, bool bypassWarning = false, params string[] jsonPaths)
             : base(rowpath, byteArrayProjectionMode)
         {

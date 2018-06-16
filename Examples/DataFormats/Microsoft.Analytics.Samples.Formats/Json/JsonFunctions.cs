@@ -81,16 +81,21 @@ namespace Microsoft.Analytics.Samples.Formats.Json
         }
 
         public static SqlMap<string, T> JsonTupleCompressed<T>(byte[] compressedJson, params string[] paths)
+        {           
+            return JsonTuple<T>(DecompressByteArray(compressedJson), paths);
+        }
+
+        public static byte[] DecompressByteArray(byte[] compressedBytes)
         {
             byte[] decompressedBytes;
-            using (var compressedMs = new MemoryStream(compressedJson))
+            using (var compressedMs = new MemoryStream(compressedBytes))
             using (var decompressedMs = new MemoryStream())
             using (var gzs = new BufferedStream(new GZipStream(compressedMs, CompressionMode.Decompress), BUFFER_SIZE))
             {
                 gzs.CopyTo(decompressedMs);
-                decompressedBytes = decompressedMs.ToArray();                
+                decompressedBytes = decompressedMs.ToArray();
             }
-            return JsonTuple<T>(decompressedBytes, paths);
+            return decompressedBytes;
         }
 
         /// <summary>

@@ -37,6 +37,12 @@ namespace Microsoft.Analytics.Samples.Formats.Json
     [SqlUserDefinedExtractor(AtomicFileProcessing=true)]
     public class JsonExtractor : IExtractor
     {
+        /// <summary>
+        /// Byte array columns assigning modes.
+        /// Normal: expecting a serialized byte array. Assigning the deserialized byte array.
+        /// BytesString: assigning the UTF-8 encoded byte array of the corresponding JSON string.
+        /// BytesStringCompressed: assigning the BytesString-mode array in a GZip-compressed form.
+        /// </summary>
         public enum ByteArrayProjectionMode
         {
             Normal,
@@ -60,7 +66,7 @@ namespace Microsoft.Analytics.Samples.Formats.Json
         /// <param name="rowpath">Selector expression to select a collection of JSON fragments. Each fragment ought to promote one row in the result set. 
         /// Default: the type of the JSON root object determines: collection - this collection will be the fragment collection,
         /// single object - fragment collection containing only the root object (promotes single row)</param>
-        /// <param name="byteArrayProjectionMode">Indicates whether byte array columns hold the corresponding JSON fragment compressed. Deafult: no.</param>
+        /// <param name="byteArrayProjectionMode">Controls how to assign value to byte array columns.</param>
         /// <param name="numOfDocs">The number of JSON documents to parse. Default: the reader will process till the end of the line.</param>
         /// <param name="skipMalformedObjects">Indicates whether to silently skip malformed JSON objects. Default: false.</param>
         public JsonExtractor(string rowpath = null, ByteArrayProjectionMode byteArrayProjectionMode = ByteArrayProjectionMode.Normal, int? numOfDocs=null, bool skipMalformedObjects = false)
