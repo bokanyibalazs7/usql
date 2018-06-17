@@ -87,6 +87,8 @@ namespace Microsoft.Analytics.Samples.Formats.Json
 
         public static byte[] DecompressByteArray(byte[] compressedBytes)
         {
+            if (compressedBytes == null)
+                return null;
             byte[] decompressedBytes;
             using (var compressedMs = new MemoryStream(compressedBytes))
             using (var decompressedMs = new MemoryStream())
@@ -276,7 +278,7 @@ namespace Microsoft.Analytics.Samples.Formats.Json
                 // For non-scalar objects, we serialize them into a string before we convert them into byte[].
                 case JTokenType.Object:
                 case JTokenType.Array:
-                    return Encoding.UTF8.GetBytes(token.ToString());
+                    return Encoding.UTF8.GetBytes(token.ToString(Formatting.None));
 
                 // For numeric scalars we simply delegate to Json.Net (JsonConvert) for string conversions.
                 // This ensures the string conversion matches the JsonTextWriter.
