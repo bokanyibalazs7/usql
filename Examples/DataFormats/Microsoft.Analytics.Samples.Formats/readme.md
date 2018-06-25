@@ -111,9 +111,14 @@ REFERENCE ASSEMBLY [Microsoft.Analytics.Samples.Formats];
 
 These configuration options can be set via constructor parameters:
 - [JSONPath](https://www.newtonsoft.com/json/help/html/SelectToken.htm#SelectTokenJSONPath) expression to select a collection of JSON fragments. Each fragment promotes one row to the result set.
-- bool flag indicating whether byte array columns in the projection list to hold the projected JSON fragment compressed. Useful for circumventing the 4MB size limit of rowset rows.
+- configurable byte array column assigning mode. It can assign to byte array column by converting the corresponding JSON fragment in the following ways:
+  - **Built-in extractor mode** deserializes the JSON fragment to a byte array. The format of the fragment needs to be supported by the [JSON.NET's ToObject method](https://www.newtonsoft.com/json/help/html/M_Newtonsoft_Json_Linq_JToken_ToObject.htm). This mode is the same as [the original `JsonExtractor`](https://github.com/Azure/usql/blob/master/Examples/DataFormats/Microsoft.Analytics.Samples.Formats/Json/JsonExtractor.cs) has.
+  - **Mrys-json-branch extractor mode** assigns the byte array representation of the fragment string. It uses UTF-8 encoding to convert to string to byte array.  This mode is the same as the  [`JsonExtractor` on the mrys-json branch](https://github.com/Azure/usql/blob/mrys-json/Examples/DataFormats/Microsoft.Analytics.Samples.Formats/Json/JsonExtractor.cs) has.
+  - **Compressed mode** the same as above, but the byte array gets GZip-compressed before assigning. This comes in handy if you have longer lines than 4 MB.
 - bool flag indicating whether to silently skip malformed JSON objects.
 - number of documents to parse. Useful when you do not want to process the entire input.
+
+Moreover `JsonExtractor` supports mapping JSON fragments to `SqlArray<string>` or `SqlArray<byte[]>` typed columns.
 
 ## Using the JSON UDF's
 
@@ -156,14 +161,16 @@ USING Outputters.Csv();
 
 ````
 
+Note that lines in the input file must be shorter than 128 kB.
+
 ## Using the Multiline-Json Extractor
 
 There is a limitation with the approach above, if you have very long JSON documents in the rows. You can hit either the 128kB [limit](https://feedback.azure.com/forums/327234-data-lake/suggestions/13416093-usql-string-data-type-has-a-size-limit-of-128kb) of `string` typed columns or the 4MB limit of row size in the output of the first, text-based extractor.
-In this case, you can use MultiLineJsonExtractor, which has the following key capabilities:
+In this case, you can use `MultiLineJsonExtractor` - a derived type of `JsonExtractor`, which has the following key capabilities:
 
 - handles line splitting using the user-supplied delimiter
 - processes lines in parallel
-- uses the column compression feature of its parent, JsonExtractor, to store compressed JSON fragments in `byte[]` typed columns for further processing
+- can use the features of `JsonExtractor`: compressed byte array columns,  skip malformed JSON objects, number of documents to parse
 
 First, we create a table to hold all extracted data, some parts in compressed form.
 
@@ -181,17 +188,14 @@ CREATE TABLE dbo.WikidataImport
 );
 ````
 
-Then we fire up the extractor and load in the staging table. For `byte[]` typed columns, the extractor GZip compresses the corresponding JSON fragment.
+Then we fire up the extractor and load in the staging table. For `byte[]` typed columns, the extractor GZip-compresses the corresponding JSON fragment.
 
-````
-REFERENCE ASSEMBLY wikidata.[Newtonsoft.Json];
-REFERENCE ASSEMBLY wikidata.[Microsoft.Analytics.Samples.Formats];
+
+```
+REFERENCE ASSEMBLY [Newtonsoft.Json];
+REFERENCE ASSEMBLY [Microsoft.Analytics.Samples.Formats];
 
 USING Microsoft.Analytics.Samples.Formats.Json;
-
-DECLARE @InputPath string = "/wikidata-json-dump/wikidata-20170918-all.json";
-
-DECLARE @OutputFile string = "/wikidata-json-dump/wikidata-extract-171228.csv";
 
 @RawData =
 EXTRACT
@@ -202,8 +206,12 @@ EXTRACT
 ,[aliases] byte[]
 ,[claims] byte[]
 ,[sitelinks] byte[]
-FROM @InputPath
-USING new MultiLineJsonExtractor(rowdelim:",\n");
+FROM "/wikidata-json-dump/wikidata-20180122-all.json"
+USING new MultiLineJsonExtractor(
+  linedelim:",\n"
+  ,numOfDocsPerLine:1
+  ,byteArrayProjectionMode:
+      JsonExtractor.ByteArrayProjectionMode.BytesStringCompressed);
 
 INSERT INTO WikidataImport
 SELECT [id],
@@ -214,13 +222,13 @@ SELECT [id],
        [claims],
        [sitelinks]
 FROM @RawData;
-````
+```
 
 For working with the compressed columns, please refer to the next section.
 
 ### Multiline-JSON extractor configuration options
 
-All the configuration options of JsonExtractor are available. The multiline-specific options are as follows:
+All the configuration options of `JsonExtractor` are available. The multiline-specific options are as follows:
 
 - line delimiting string and its encoding.
 - instead of the overall number of documents to parse, you can specify the number documents per line.
