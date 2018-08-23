@@ -13,6 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
+using System.Collections;
 using System.IO;
 using Microsoft.Analytics.Interfaces;
 using Newtonsoft.Json;
@@ -88,14 +90,30 @@ namespace Microsoft.Analytics.Samples.Formats.Json
 
                 // Note: We don't bloat the JSON with sparse (null) properties
                 if(value != null)
-                { 
+                {
                     writer.WritePropertyName(columns[i].Name, escape:true);
-                    writer.WriteValue(value);
+                    WriteValue(writer, value);
                 }
             }
 
             // Footer
             writer.WriteEndObject();
+        }
+
+        private static void WriteValue(JsonTextWriter writer, object value)
+        {
+            IEnumerable collection = value as IEnumerable;
+            if (collection != null && !(collection is string))
+            {
+                writer.WriteStartArray();
+                foreach (var item in collection)
+                {
+                    WriteValue(writer, item);
+                }
+                writer.WriteEndArray();
+            }
+            else
+                writer.WriteValue(value);
         }
     }
 }

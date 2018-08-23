@@ -13,7 +13,7 @@
     <AssemblyName>Microsoft.Analytics.Samples.Formats</AssemblyName>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <OutputType>Library</OutputType>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
   </PropertyGroup>
