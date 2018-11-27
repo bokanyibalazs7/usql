@@ -20,6 +20,8 @@ using Microsoft.Analytics.Interfaces;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 using Microsoft.Analytics.Types.Sql;
 
 namespace Microsoft.Analytics.Samples.Formats.Json
@@ -39,6 +41,10 @@ namespace Microsoft.Analytics.Samples.Formats.Json
     {
         /// <summary/>
         private JsonTextWriter writer;
+
+        private static readonly KeyValuePair<string, object> KVP= new KeyValuePair<string, object>("foo","bar");
+        private const string keyPropName = nameof(KVP.Key);
+        private const string valPropName = nameof(KVP.Value);
 
         /// <summary/>
         public JsonOutputter()
@@ -69,6 +75,7 @@ namespace Microsoft.Analytics.Samples.Formats.Json
             {
                 // Footer (array)
                 this.writer.WriteEndArray();
+                this.writer.Flush();
                 this.writer.Close();
             }
         }
@@ -103,6 +110,7 @@ namespace Microsoft.Analytics.Samples.Formats.Json
             writer.WriteEndObject();
         }
 
+        [SuppressMessage("ReSharper", "PossibleMultipleEnumeration")]
         private static void WriteValue(JsonTextWriter writer, object value)
         {
             if(value != null)
@@ -115,7 +123,7 @@ namespace Microsoft.Analytics.Samples.Formats.Json
                     // Dictionary
                     if(IsMap(valueType))
                     {
-                        WriteObject(writer, collection);
+                        WriteMapAsEnumerable(writer, collection);
                     }
                     // Array
                     else
@@ -126,19 +134,17 @@ namespace Microsoft.Analytics.Samples.Formats.Json
                 // KeyValue
                 else if (IsMap(valueType))
                 {
-                    WriteKeyValuePair(writer, value, valueType);
+                    WriteKeyValuePair(writer, value);
                 }
                 else
                     writer.WriteValue(value);
             }
         }
 
-        private static void WriteKeyValuePair(JsonTextWriter writer, object value, Type valueType)
+        private static void WriteKeyValuePair(JsonTextWriter writer, object kvp)
         {
-            writer.WriteStartObject();
-            writer.WritePropertyName(valueType.GetProperty("Key").GetValue(value, null).ToString(), escape: true);
-            WriteValue(writer, valueType.GetProperty("Value").GetValue(value, null));
-            writer.WriteEndObject();
+
+            WriteMapAsEnumerable(writer, new []{kvp});            
         }
 
         private static void WriteArray(JsonTextWriter writer, IEnumerable collection)
@@ -151,14 +157,23 @@ namespace Microsoft.Analytics.Samples.Formats.Json
             writer.WriteEndArray();
         }
 
-        private static void WriteObject(JsonTextWriter writer, IEnumerable collection)
+        private static void WriteMapAsEnumerable(JsonTextWriter writer, IEnumerable collection)
         {
             writer.WriteStartObject();
+            PropertyInfo keyProp = null;
+            PropertyInfo valProp = null;
             foreach (var item in collection)
             {
-                Type itemType = item.GetType();
-                writer.WritePropertyName(itemType.GetProperty("Key").GetValue(item, null).ToString(), escape: true);
-                WriteValue(writer, itemType.GetProperty("Value").GetValue(item, null));
+                if (keyProp == null)
+                {
+                    Type itemType = item.GetType();
+                    keyProp = itemType.GetProperty(keyPropName);
+                    valProp = itemType.GetProperty(valPropName);
+                }
+                // ReSharper disable once PossibleNullReferenceException
+                writer.WritePropertyName(keyProp.GetValue(item, null).ToString(), escape: true);
+                // ReSharper disable once PossibleNullReferenceException
+                WriteValue(writer, valProp.GetValue(item, null));
             }
             writer.WriteEndObject();
         }
