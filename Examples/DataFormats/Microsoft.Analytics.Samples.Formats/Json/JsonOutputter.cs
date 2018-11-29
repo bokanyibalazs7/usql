@@ -36,7 +36,7 @@ namespace Microsoft.Analytics.Samples.Formats.Json
     ///         ...
     ///     ]
     /// </summary>
-    [SqlUserDefinedOutputter(AtomicFileProcessing = true)]
+    [SqlUserDefinedOutputter(AtomicFileProcessing = false)]
     public class JsonOutputter : IOutputter
     {
         /// <summary/>
@@ -58,10 +58,7 @@ namespace Microsoft.Analytics.Samples.Formats.Json
             if (this.writer == null)
             {
                 // Json.Net (writer)
-                this.writer = new JsonTextWriter(new StreamWriter(output.BaseStream));
-
-                // Header (array)
-                this.writer.WriteStartArray();
+                this.writer = new JsonTextWriter(new StreamWriter(output.BaseStream)){Formatting = Formatting.None};            
             }
 
             // Row(s)
@@ -72,14 +69,12 @@ namespace Microsoft.Analytics.Samples.Formats.Json
         public override void Close()
         {
             if (this.writer != null)
-            {
-                // Footer (array)
-                this.writer.WriteEndArray();
+            {             
                 this.writer.Flush();
                 this.writer.Close();
             }
         }
-
+       
         /// <summary/>
         private static void WriteRow(IRow row, JsonTextWriter writer)
         {
@@ -108,6 +103,7 @@ namespace Microsoft.Analytics.Samples.Formats.Json
 
             // Footer
             writer.WriteEndObject();
+            writer.WriteWhitespace(Environment.NewLine);
         }
 
         [SuppressMessage("ReSharper", "PossibleMultipleEnumeration")]

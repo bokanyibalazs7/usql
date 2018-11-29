@@ -25,7 +25,7 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
             object[] values = new object[2] { a, b };
             var row = new USqlRow(schema, values);
 
-            var expected = "[{\"a\":0,\"b\":1}]";
+            var expected = "{\"a\":0,\"b\":1}";
             var actual = GetOutputterResult(row);
 
             Assert.AreEqual(expected, actual);
@@ -44,7 +44,7 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
             object[] values = new object[3] { a, b, null };
             var row = new USqlRow(schema, values);
 
-            var expected = "[{\"a\":0,\"b\":1}]";
+            var expected = "{\"a\":0,\"b\":1}";
             var actual = GetOutputterResult(row);
 
             Assert.AreEqual(expected, actual);
@@ -60,7 +60,7 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
             object[] values = new object[2] { 0, 1 };
             var row = new USqlRow(schema, values);
 
-            var expected = "[{\"a\":0,\"b\":1}]";
+            var expected = "{\"a\":0,\"b\":1}";
             var actual = GetOutputterResult(row);
 
             Assert.AreEqual(expected, actual);
@@ -77,7 +77,7 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
             object[] values = new object[3] { 0, 1, null };
             var row = new USqlRow(schema, values);
 
-            var expected = "[{\"a\":0,\"b\":1}]";
+            var expected = "{\"a\":0,\"b\":1}";
             var actual = GetOutputterResult(row);
 
             Assert.AreEqual(expected, actual);
@@ -93,7 +93,7 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
             object[] values = new object[2] { 9223372036854775807, -9223372036854775807 };
             var row = new USqlRow(schema, values);
 
-            var expected = "[{\"a\":9223372036854775807,\"b\":-9223372036854775807}]";
+            var expected = "{\"a\":9223372036854775807,\"b\":-9223372036854775807}";
             var actual = GetOutputterResult(row);
 
             Assert.AreEqual(expected, actual);
@@ -110,7 +110,7 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
             object[] values = new object[3] { 9223372036854775807, -9223372036854775807, null };
             var row = new USqlRow(schema, values);
 
-            var expected = "[{\"a\":9223372036854775807,\"b\":-9223372036854775807}]";
+            var expected = "{\"a\":9223372036854775807,\"b\":-9223372036854775807}";
             var actual = GetOutputterResult(row);
 
             Assert.AreEqual(expected, actual);
@@ -126,7 +126,7 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
             object[] values = new object[2] { 3.5F, 0F };
             var row = new USqlRow(schema, values);
 
-            var expected = "[{\"a\":3.5,\"b\":0.0}]";
+            var expected = "{\"a\":3.5,\"b\":0.0}";
             var actual = GetOutputterResult(row);
 
             Assert.AreEqual(expected, actual);
@@ -143,7 +143,7 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
             object[] values = new object[3] { 3.5F, 0F, null };
             var row = new USqlRow(schema, values);
 
-            var expected = "[{\"a\":3.5,\"b\":0.0}]";
+            var expected = "{\"a\":3.5,\"b\":0.0}";
             var actual = GetOutputterResult(row);
 
             Assert.AreEqual(expected, actual);
@@ -159,7 +159,7 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
             object[] values = new object[2] { 3.5D, 0D };
             var row = new USqlRow(schema, values);
 
-            var expected = "[{\"a\":3.5,\"b\":0.0}]";
+            var expected = "{\"a\":3.5,\"b\":0.0}";
             var actual = GetOutputterResult(row);
 
             Assert.AreEqual(expected, actual);
@@ -176,7 +176,7 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
             object[] values = new object[3] { 3.5, 0D, null };
             var row = new USqlRow(schema, values);
 
-            var expected = "[{\"a\":3.5,\"b\":0.0}]";
+            var expected = "{\"a\":3.5,\"b\":0.0}";
             var actual = GetOutputterResult(row);
 
             Assert.AreEqual(expected, actual);
@@ -192,7 +192,7 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
             object[] values = new object[2] { 350.5M, 0M };
             var row = new USqlRow(schema, values);
 
-            var expected = "[{\"a\":350.5,\"b\":0.0}]";
+            var expected = "{\"a\":350.5,\"b\":0.0}";
             var actual = GetOutputterResult(row);
 
             Assert.AreEqual(expected, actual);
@@ -209,7 +209,7 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
             object[] values = new object[3] { 350.5M, 0M, null };
             var row = new USqlRow(schema, values);
 
-            var expected = "[{\"a\":350.5,\"b\":0.0}]";
+            var expected = "{\"a\":350.5,\"b\":0.0}";
             var actual = GetOutputterResult(row);
 
             Assert.AreEqual(expected, actual);
@@ -229,7 +229,7 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
             object[] values = new object[2] { a, b };
             var row = new USqlRow(schema, values);
 
-            var expected = "[{\"a\":2,\"b\":4}]";
+            var expected = "{\"a\":2,\"b\":4}";
             var actual = GetOutputterResult(row);
 
             Assert.AreEqual(expected, actual);
@@ -249,7 +249,7 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
             object[] values = new object[2] { a, b };
             var row = new USqlRow(schema, values);
 
-            var expected = "[{\"a\":2}]";
+            var expected = "{\"a\":2}";
             var actual = GetOutputterResult(row);
 
             Assert.AreEqual(expected, actual);
@@ -265,7 +265,7 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
             object[] values = new object[2] { true, false };
             var row = new USqlRow(schema, values);
 
-            var expected = "[{\"a\":true,\"b\":false}]";
+            var expected = "{\"a\":true,\"b\":false}";
             var actual = GetOutputterResult(row);
 
             Assert.AreEqual(expected, actual);
@@ -282,7 +282,7 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
             object[] values = new object[3] { true, false, null };
             var row = new USqlRow(schema, values);
 
-            var expected = "[{\"a\":true,\"b\":false}]";
+            var expected = "{\"a\":true,\"b\":false}";
             var actual = GetOutputterResult(row);
 
             Assert.AreEqual(expected, actual);
@@ -299,7 +299,7 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
             object[] values = new object[3] { "test", "", null };
             var row = new USqlRow(schema, values);
 
-            var expected = "[{\"a\":\"test\",\"b\":\"\"}]";
+            var expected = "{\"a\":\"test\",\"b\":\"\"}";
             var actual = GetOutputterResult(row);
 
             Assert.AreEqual(expected, actual);
@@ -315,7 +315,7 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
             object[] values = new object[2] { 'a', ' ' };
             var row = new USqlRow(schema, values);
 
-            var expected = "[{\"a\":\"a\",\"b\":\" \"}]";
+            var expected = "{\"a\":\"a\",\"b\":\" \"}";
             var actual = GetOutputterResult(row);
 
             Assert.AreEqual(expected, actual);
@@ -332,7 +332,7 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
             object[] values = new object[3] { 'a', ' ', null };
             var row = new USqlRow(schema, values);
 
-            var expected = "[{\"a\":\"a\",\"b\":\" \"}]";
+            var expected = "{\"a\":\"a\",\"b\":\" \"}";
             var actual = GetOutputterResult(row);
 
             Assert.AreEqual(expected, actual);
@@ -347,7 +347,7 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
             object[] values = new object[1] { new DateTime(2010, 01, 05) };
             var row = new USqlRow(schema, values);
 
-            var expected = "[{\"a\":\"2010-01-05T00:00:00\"}]";
+            var expected = "{\"a\":\"2010-01-05T00:00:00\"}";
             var actual = GetOutputterResult(row);
 
             Assert.AreEqual(expected, actual);
@@ -363,7 +363,7 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
             object[] values = new object[2] { new DateTime(2010, 01, 05), null };
             var row = new USqlRow(schema, values);
 
-            var expected = "[{\"a\":\"2010-01-05T00:00:00\"}]";
+            var expected = "{\"a\":\"2010-01-05T00:00:00\"}";
             var actual = GetOutputterResult(row);
 
             Assert.AreEqual(expected, actual);
@@ -401,7 +401,7 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
 
             var row = new USqlRow(schema, values);
 
-            var expected = "[{" +
+            var expected = "{" +
                 "\"a\":[0,1]," +
                 "\"b\":[0,1]," +
                 "\"c\":[9223372036854775807,-9223372036854775807]," +
@@ -413,7 +413,7 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
                 "\"i\":[\"test\",\"\"]," +
                 "\"j\":[\"a\",\" \"]," +
                 "\"k\":[\"2010-01-05T00:00:00\",\"2015-05-06T00:00:00\"]" +
-                "}]";
+                "}";
             var actual = GetOutputterResult(row);
 
             Assert.AreEqual(expected, actual);
@@ -444,7 +444,7 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
 
             var row = new USqlRow(schema, values);
 
-            var expected = "[{\"a\":{" +
+            var expected = "{\"a\":{" +
                 "\"short\":3," +
                 "\"int\":3," +
                 "\"long\":9223372036854775807," +
@@ -456,7 +456,7 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
                 "\"string\":\"test\"," +
                 "\"char\":\"a\"," +
                 "\"DateTime\":\"2015-05-06T00:00:00\"" +
-                "}}]";
+                "}}";
             var actual = GetOutputterResult(row);
 
             Assert.AreEqual(expected, actual);
@@ -487,7 +487,7 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
 
             var row = new USqlRow(schema, values);
 
-            var expected = "[{\"a\":{" +
+            var expected = "{\"a\":{" +
                 "\"short\":3," +
                 "\"int\":3," +
                 "\"long\":9223372036854775807," +
@@ -499,7 +499,7 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
                 "\"string\":\"test\"," +
                 "\"char\":\"a\"," +
                 "\"DateTime\":\"2015-05-06T00:00:00\"" +
-                "}}]";
+                "}}";
             var actual = GetOutputterResult(row);
 
             Assert.AreEqual(expected, actual);
@@ -517,7 +517,7 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
 
             var row = new USqlRow(schema, values);
 
-            var expected = "[{\"a\":{\"int\":3}}]";
+            var expected = "{\"a\":{\"int\":3}}";
             var actual = GetOutputterResult(row);
 
             Assert.AreEqual(expected, actual);
@@ -548,7 +548,7 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
 
             var row = new USqlRow(schema, values);
 
-            var expected = "[{\"a\":[{\"test1\":\"asd\",\"test2\":3},{\"test1\":\"das\",\"test2\":3}]}]";
+            var expected = "{\"a\":[{\"test1\":\"asd\",\"test2\":3},{\"test1\":\"das\",\"test2\":3}]}";
             var actual = GetOutputterResult(row);
 
             Assert.AreEqual(expected, actual);
@@ -571,7 +571,7 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
 
             var row = new USqlRow(schema, values);
 
-            var expected = "[{\"a\":{\"test1\":[2,3],\"test2\":[\"asd\",\"\"]}}]";
+            var expected = "{\"a\":{\"test1\":[2,3],\"test2\":[\"asd\",\"\"]}}";
             var actual = GetOutputterResult(row);
 
             Assert.AreEqual(expected, actual);
@@ -610,7 +610,7 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
 
             var row = new USqlRow(schema, values);
 
-            var expected = "[{\"a\":" +
+            var expected = "{\"a\":" +
                 "{" +
                     "\"test1\":" +
                     "{" +
@@ -623,7 +623,7 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
                         "{\"test1\":\"das\",\"test2\":3}" +
                     "]" +
                 "}" +
-                "}]";
+                "}";
             var actual = GetOutputterResult(row);
 
             Assert.AreEqual(expected, actual);
@@ -638,7 +638,7 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
                 var unstructuredWriter = new USqlStreamWriter(ms);
                 outputter.Output(row, unstructuredWriter);
                 outputter.Close();
-                var output = Encoding.ASCII.GetString(ms.ToArray());
+                var output = Encoding.ASCII.GetString(ms.ToArray()).Replace(Environment.NewLine, string.Empty);
                 return output;
             }
         }
