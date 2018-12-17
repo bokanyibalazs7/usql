@@ -11,7 +11,7 @@ using Microsoft.Analytics.Types.Sql;
 namespace Microsoft.Analytics.Samples.Formats.Tests
 {
     [TestClass]
-    public class JsonOutputterTests
+    public class JsonLinesOutputterTests
     {
         [TestMethod]
         public void JsonOutputter_DatatypeShort_Outputted()
@@ -578,6 +578,39 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
         }
 
         [TestMethod]
+        public void JsonOutputter_DatatypeMapOfArrays_MultiRow_Outputted()
+        {
+            USqlSchema schema = new USqlSchema(
+                new USqlColumn<Dictionary<string, object>>("a")
+            );
+
+            List<USqlRow> rows = new List<USqlRow>();
+            Dictionary<string, object> dict = new Dictionary<string, object>
+            {
+                { "test1", new int[]{ 2, 3 } },
+                { "test2", new string[]{ "asd", "" } },
+            };
+
+            rows.Add(new USqlRow(schema, new object[] { dict }));
+
+            dict = new Dictionary<string, object>
+            {
+                { "test3", new int[]{ 1, 4 } },
+                { "test4", new string[]{ "foo", "bar" } },
+            };
+
+            rows.Add(new USqlRow(schema, new object[] { dict }));
+
+
+            var expected = "{\"a\":{\"test1\":[2,3],\"test2\":[\"asd\",\"\"]}}"+
+                Environment.NewLine +
+                "{\"a\":{\"test3\":[1,4],\"test4\":[\"foo\",\"bar\"]}}";
+            var actual = GetOutputterResult(rows);
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
         public void JsonOutputter_DatatypeComplex_Outputted()
         {
             USqlSchema schema = new USqlSchema(
@@ -590,7 +623,7 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
                     "test1", new Dictionary<string, object>(){ { "nested", 1}, { "nestedArray", new int[] { 1, 2 } } }
                 },
                 {
-                    "test2", new Dictionary<string, object>[2]
+                    "test2", new Dictionary<string, object>[]
                     {
                         new Dictionary<string, object>
                         {
@@ -629,18 +662,26 @@ namespace Microsoft.Analytics.Samples.Formats.Tests
             Assert.AreEqual(expected, actual);
         }
 
-        private string GetOutputterResult(IRow row)
+        private string GetOutputterResult(IEnumerable<IRow> rows)
         {
-            var outputter = new JsonOutputter();
+            var outputter = new JsonLinesOutputter();
 
             using (var ms = new MemoryStream())
             {
                 var unstructuredWriter = new USqlStreamWriter(ms);
-                outputter.Output(row, unstructuredWriter);
+                foreach (IRow row in rows)
+                {
+                    outputter.Output(row, unstructuredWriter);
+                }                
                 outputter.Close();
-                var output = Encoding.ASCII.GetString(ms.ToArray()).Replace(Environment.NewLine, string.Empty);
+                var output = Encoding.ASCII.GetString(ms.ToArray()).TrimEnd();
                 return output;
             }
+        }
+
+        private string GetOutputterResult(IRow row)
+        {
+            return GetOutputterResult(new[] { row });
         }
     }
 }

@@ -13,16 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
-
-using System.Collections;
 using System.IO;
 using Microsoft.Analytics.Interfaces;
 using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Reflection;
-using Microsoft.Analytics.Types.Sql;
 
 namespace Microsoft.Analytics.Samples.Formats.Json
 {
@@ -36,15 +29,11 @@ namespace Microsoft.Analytics.Samples.Formats.Json
     ///         ...
     ///     ]
     /// </summary>
-    [SqlUserDefinedOutputter(AtomicFileProcessing = false)]
+    [SqlUserDefinedOutputter(AtomicFileProcessing = true)]
     public class JsonOutputter : IOutputter
     {
         /// <summary/>
         private JsonTextWriter writer;
-
-        private static readonly KeyValuePair<string, object> KVP= new KeyValuePair<string, object>("foo","bar");
-        private const string keyPropName = nameof(KVP.Key);
-        private const string valPropName = nameof(KVP.Value);
 
         /// <summary/>
         public JsonOutputter()
@@ -58,7 +47,10 @@ namespace Microsoft.Analytics.Samples.Formats.Json
             if (this.writer == null)
             {
                 // Json.Net (writer)
-                this.writer = new JsonTextWriter(new StreamWriter(output.BaseStream)){Formatting = Formatting.None};            
+                this.writer = new JsonTextWriter(new StreamWriter(output.BaseStream));
+
+                // Header (array)
+                this.writer.WriteStartArray();
             }
 
             // Row(s)
@@ -69,12 +61,13 @@ namespace Microsoft.Analytics.Samples.Formats.Json
         public override void Close()
         {
             if (this.writer != null)
-            {             
-                this.writer.Flush();
+            {
+                // Footer (array)
+                this.writer.WriteEndArray();
                 this.writer.Close();
             }
         }
-       
+
         /// <summary/>
         private static void WriteRow(IRow row, JsonTextWriter writer)
         {
@@ -97,94 +90,12 @@ namespace Microsoft.Analytics.Samples.Formats.Json
                 if (value != null)
                 {
                     writer.WritePropertyName(columns[i].Name, escape: true);
-                    WriteValue(writer, value);
+                    writer.WriteValue(value);
                 }
             }
 
             // Footer
             writer.WriteEndObject();
-            writer.WriteWhitespace(Environment.NewLine);
-        }
-
-        [SuppressMessage("ReSharper", "PossibleMultipleEnumeration")]
-        private static void WriteValue(JsonTextWriter writer, object value)
-        {
-            if(value != null)
-            {
-                IEnumerable collection = value as IEnumerable;
-                Type valueType = value.GetType();
-
-                if (IsArray(collection))
-                {
-                    // Dictionary
-                    if(IsMap(valueType))
-                    {
-                        WriteMapAsEnumerable(writer, collection);
-                    }
-                    // Array
-                    else
-                    {
-                        WriteArray(writer, collection);
-                    }
-                }
-                // KeyValue
-                else if (IsMap(valueType))
-                {
-                    WriteKeyValuePair(writer, value);
-                }
-                else
-                    writer.WriteValue(value);
-            }
-        }
-
-        private static void WriteKeyValuePair(JsonTextWriter writer, object kvp)
-        {
-
-            WriteMapAsEnumerable(writer, new []{kvp});            
-        }
-
-        private static void WriteArray(JsonTextWriter writer, IEnumerable collection)
-        {
-            writer.WriteStartArray();
-            foreach (var item in collection)
-            {
-                WriteValue(writer, item);
-            }
-            writer.WriteEndArray();
-        }
-
-        private static void WriteMapAsEnumerable(JsonTextWriter writer, IEnumerable collection)
-        {
-            writer.WriteStartObject();
-            PropertyInfo keyProp = null;
-            PropertyInfo valProp = null;
-            foreach (var item in collection)
-            {
-                if (keyProp == null)
-                {
-                    Type itemType = item.GetType();
-                    keyProp = itemType.GetProperty(keyPropName);
-                    valProp = itemType.GetProperty(valPropName);
-                }
-                // ReSharper disable once PossibleNullReferenceException
-                writer.WritePropertyName(keyProp.GetValue(item, null).ToString(), escape: true);
-                // ReSharper disable once PossibleNullReferenceException
-                WriteValue(writer, valProp.GetValue(item, null));
-            }
-            writer.WriteEndObject();
-        }
-
-        private static bool IsArray(IEnumerable collection)
-        {
-            return collection != null && !(collection is string);
-        }
-
-        private static bool IsMap(Type valueType)
-        {
-            return valueType.IsGenericType &&
-                (valueType.GetGenericTypeDefinition() == typeof(KeyValuePair<,>) ||
-                valueType.GetGenericTypeDefinition() == typeof(Dictionary<,>) ||
-                valueType.GetGenericTypeDefinition() == typeof(SqlMap<,>));
         }
     }
 }
