@@ -52,6 +52,8 @@ namespace Microsoft.Analytics.Samples.Formats.Json
             // Delegate
             return JsonTuple<string>(json, paths);
         }
+
+
         /// <summary>
         /// JsonTuple("json", [$e1], [$e2], ...)
         ///     1. Parse Json (once for all paths)
@@ -193,7 +195,7 @@ namespace Microsoft.Analytics.Samples.Formats.Json
             }
         }
 
-        internal static object ConvertToken(JToken token, Type type, JsonExtractor.ByteArrayProjectionMode byteArrayProjectionMode = JsonExtractor.ByteArrayProjectionMode.Normal)
+        internal static object ConvertToken(JToken token, Type type, JsonExtractor.ByteArrayProjectionMode byteArrayProjectionMode = JsonExtractor.ByteArrayProjectionMode.BytesString)
         {
             try
             { 
