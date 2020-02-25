@@ -1,4 +1,5 @@
-﻿<?xml version="1.0" encoding="utf-8"?><Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <USQLProjectVersion>2</USQLProjectVersion>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -7,7 +8,7 @@
     <ProjectGuid>d8ef40ec-6f98-4e63-9c41-a3c4879c1f81</ProjectGuid>
     <OutputType>File</OutputType>
     <AssemblyName>Algebra.xml</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <Name>Microsoft.Analytics.Sample.DataFormats U-SQL Scripts</Name>
     <RootNamespace>Microsoft.Analytics.Sample.DataFormats U-SQL Scripts</RootNamespace>
     <RuntimeVersion>default</RuntimeVersion>
@@ -29,8 +30,5 @@
   <!--target for CICD build added by project migration tool-->
   <Import Project="USqlSDKBuild.targets" Condition="Exists('USqlSDKBuild.targets')" />
   <Import Project="$(USQLSDKPath)\USqlSDKBuild.targets" Condition="!Exists('USqlSDKBuild.targets') And '$(USQLSDKPath)' != '' And Exists('$(USQLSDKPath)\USqlSDKBuild.targets')" />
-  
   <!--target for CICD command line build added by project migration tool-->
-  
-  
 </Project>
